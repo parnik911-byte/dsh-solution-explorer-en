@@ -100,10 +100,10 @@ let dialogRoot: Root | null = null
 /** Show a centered confirm/prompt dialog; resolves with the chosen value. */
 export function showDialog(opts: DialogOptions): Promise<string | boolean | null> {
   return new Promise((resolve) => {
-    const zh = document.documentElement.lang?.startsWith("zh")
+
     const isPrompt = opts.input === true
-    const okText = opts.okText || (zh ? "确定" : "OK")
-    const cancelText = opts.cancelText || (zh ? "取消" : "Cancel")
+    const okText = opts.okText || "OK"
+    const cancelText = opts.cancelText || "Cancel"
     if (dialogHost === null) {
       dialogHost = document.createElement("div")
       document.body.appendChild(dialogHost)

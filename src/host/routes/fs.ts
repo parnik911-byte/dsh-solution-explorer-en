@@ -289,7 +289,7 @@ export const fsPost: Record<string, Handler> = {
       const dest = pathModule.join(pathModule.dirname(sourcePath), newName)
       if (dest === sourcePath) { json(res, { ok: true, value: { path: source } }); return }
       const exists = await fsp.stat(dest).then(() => true).catch(() => false)
-      if (exists) { json(res, { ok: false, error: { message: '目标已存在' } }); return }
+      if (exists) { json(res, { ok: false, error: { message: 'Target already exists' } }); return }
       await fsp.rename(sourcePath, dest)
       json(res, { ok: true, value: { path: pathModule.relative(root, dest) } })
     } catch (err) {
@@ -333,7 +333,7 @@ export const fsPost: Record<string, Handler> = {
       }
       json(res, { ok: true, value: { path: target } })
     } catch (err: any) {
-      const msg = err?.code === 'EEXIST' ? '已存在同名文件或文件夹' : (err instanceof Error ? err.message : String(err))
+      const msg = err?.code === 'EEXIST' ? 'A file or folder with the same name already exists' : (err instanceof Error ? err.message : String(err))
       json(res, { ok: false, error: { message: msg } })
     }
   },

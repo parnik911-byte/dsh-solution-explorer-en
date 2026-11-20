@@ -73,11 +73,11 @@ export function registerClipboardCommands(deps: ClipboardDeps): () => void {
       const tgt = norm(targetDir);
       const parent = src.includes("/") ? src.slice(0, src.lastIndexOf("/")) : "";
       if (mode === "cut" && parent === tgt) {
-        showToast("已在目标目录，无需移动", true);
+        showToast("Already in the target folder — no move needed", true);
         return;
       }
       if (tgt && (tgt === src || tgt.startsWith(src + "/"))) {
-        showToast("不能移动到自身内部", true);
+        showToast("Cannot move into itself", true);
         return;
       }
     }
@@ -102,7 +102,7 @@ export function registerClipboardCommands(deps: ClipboardDeps): () => void {
       failed++;
       console.warn("[sol-exp] paste error", src, err);
     }
-    if (failed) showToast(failed + " 项粘贴失败", true);
+    if (failed) showToast(failed + " item(s) failed to paste", true);
     render();
     loadTree(deps);
     deps.loadGitStatus?.(deps);
@@ -128,7 +128,7 @@ export function registerClipboardCommands(deps: ClipboardDeps): () => void {
     for (const f of Array.from(files as Iterable<File>)) {
       if (f.size > 50 * 1024 * 1024) {
         skipped++;
-        showToast("文件过大（>50MB）跳过: " + f.name);
+        showToast("File too large (>50MB), skipped: " + f.name);
         continue;
       }
       try {
@@ -156,7 +156,7 @@ export function registerClipboardCommands(deps: ClipboardDeps): () => void {
         console.warn("[sol-exp] upload error", f.name, err);
       }
     }
-    if (failed) showToast(failed + " 个文件上传失败", true);
+    if (failed) showToast(failed + " file(s) failed to upload", true);
     render();
     loadTree(deps);
     deps.loadGitStatus?.(deps);
@@ -185,12 +185,12 @@ export function registerClipboardCommands(deps: ClipboardDeps): () => void {
         const src = norm(raw);
         const parent = src.includes("/") ? src.slice(0, src.lastIndexOf("/")) : "";
         if (src === tgt || tgt.startsWith(src + "/")) {
-          showToast("不能移动到自身内部", true);
+          showToast("Cannot move into itself", true);
           render();
           return;
         }
         if (parent === tgt) {
-          showToast("已在目标目录，无需移动", true);
+          showToast("Already in the target folder — no move needed", true);
           render();
           return;
         }
@@ -216,7 +216,7 @@ export function registerClipboardCommands(deps: ClipboardDeps): () => void {
       failed++;
       console.warn("[sol-exp] move error", src, err);
     }
-    if (failed) showToast(failed + " 项移动失败", true);
+    if (failed) showToast(failed + " item(s) failed to move", true);
     render();
     loadTree(deps);
     deps.loadGitStatus?.(deps);

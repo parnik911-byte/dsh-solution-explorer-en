@@ -7,7 +7,7 @@
 [![npm](https://img.shields.io/npm/v/dsh-solution-explorer)](https://www.npmjs.com/package/dsh-solution-explorer)
 [![npm downloads](https://img.shields.io/npm/dm/dsh-solution-explorer)](https://www.npmjs.com/package/dsh-solution-explorer)
 [![Awesome DSH Plugin](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com)
-[![dshfind](https://dshfind.com/api/badge/xiaoksio/dsh-solution-explorer?lang=zh)](https://dshfind.com/zh/plugins/xiaoksio/dsh-solution-explorer?ref=badge)
+[![dshfind](https://dshfind.com/api/badge/xiaoksio/dsh-solution-explorer?lang=en)](https://dshfind.com/plugins/xiaoksio/dsh-solution-explorer?ref=badge)
 [![license](https://img.shields.io/github/license/xiaoksio/dsh-solution-explorer)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/xiaoksio/dsh-solution-explorer)](https://github.com/xiaoksio/dsh-solution-explorer)
 
@@ -15,7 +15,7 @@
 
 ![File explorer + git status](https://img.shields.io/badge/-File_explorer_%2B_git_status-4d6bfe) ![Multi-tab editor](https://img.shields.io/badge/-Multi--tab_editor-4d6bfe) ![Previews](https://img.shields.io/badge/-Previews-4d6bfe) ![Diff](https://img.shields.io/badge/-Diff-4d6bfe) ![Commit graph](https://img.shields.io/badge/-Commit_graph-4d6bfe) ![Terminal](https://img.shields.io/badge/-Terminal-4d6bfe) ![Sidebar takeover](https://img.shields.io/badge/-Sidebar_takeover-4d6bfe)
 
-[English](README.md) · [简体中文](README.zh.md)
+
 
 ![dsh-solution-explorer demo](demo.gif)
 
@@ -74,7 +74,7 @@
 - **File operations** — context menu with new file/folder, delete (confirm
   dialog), copy / cut / paste, copy relative / absolute path; drag files within
   the tree, drag files in from the OS, multi-select bulk actions.
-- **i18n** — English and Chinese, follows the browser language.
+- **English UI** — the interface is English-only.
 - **Dark theme** — matches the DSH Web UI tokens.
 
 ## Screenshots

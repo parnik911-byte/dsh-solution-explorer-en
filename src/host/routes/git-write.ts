@@ -98,7 +98,7 @@ export const gitWritePost: Record<string, Handler> = {
   },
   '/solution-explorer/git-init': async ({ res, root }) => {
     if (!root) { json(res, { ok: false, error: { message: 'root required' } }); return }
-    if (isGitRepo(root)) { json(res, { ok: false, error: { message: '已经是 Git 仓库' } }); return }
+    if (isGitRepo(root)) { json(res, { ok: false, error: { message: 'Already a git repository' } }); return }
     const result = git(['init'], root)
     json(res, result.ok ? { ok: true, value: true } : { ok: false, error: { message: result.error } })
   },

@@ -64,7 +64,7 @@ src/client/
   (`@deepseek-ai/dsh-client-ui-primitives`: `FileTypeIcon`, `IconXxx16`); no
   hand-written SVG strings.
 - **Styles use `--dsw-alias-*` tokens** (never literal colors), and product copy
-  goes through `t("key")` with both Chinese and English in `locales.ts`.
+  goes through `t("key")` with English copy in `locales.ts`.
 - **Host routes answer `{ ok: true, value }` or `{ ok: false, error: { message } }`.**
   Git runs through `execFileSync('git', args, { cwd })` (never a shell string),
   porcelain output is only `trimEnd()`, and every filesystem path passes the
@@ -89,7 +89,7 @@ pnpm pack --dry-run     # one lib/index.js + one lib/client.js (+ types), nothin
 
 ## Docs to update with a feature
 
-- `README.md` and `README.zh.md` feature lists (both languages),
+- `README.md` feature list,
 - `package.json`'s `description` (it is the npm page's headline),
 - `assets/` screenshots and `screenshots.json` when the UI changed,
 - `demo.gif` / the demo video when the flow changed.
@@ -104,7 +104,7 @@ gh release create vX.Y.Z dsh-solution-explorer-X.Y.Z.tgz --notes-file notes.md
 npm publish --ignore-scripts
 ```
 
-Release notes are grouped as 新增 / 修复 / 文档同步 (feat / fix / docs), one line
+Release notes are grouped as Features / Fixes / Docs (feat / fix / docs), one line
 per change.
 
 ## License

@@ -44,13 +44,13 @@ function textMessage(text: string): LlmMessage {
 
 /**
  * Vision-backend wrapper/chain routes injected by dsh-vision-router (mirror
- * providers such as "DeepSeek + 自动识图"). They are real `llm` routes but are
+ * providers such as "DeepSeek + auto image recognition"). They are real `llm` routes but are
  * transport shims, not user-facing chat models, and DSH's own model picker
  * hides them — so we do too, to keep the commit-model list identical.
  *
  * Besides the known stock ids, we also catch user-renamed wrapper/chain routes
  * (vision-router lets you change `wrapperRoute`/`chainRoute`): an id that
- * contains a `vision` token or a display name that says「自动识图」is treated
+ * contains a `vision` token or a display name that says "auto image recognition" is treated
  * as a vision shim. The English `vision` check is scoped to the route id only,
  * never the display name, so a real multimodal provider id like `openai` whose
  * model names mention "vision" is not removed.
@@ -59,7 +59,7 @@ function isVisionBackendProvider(id: string, name?: string): boolean {
   if (id === 'vision-http' || id === 'vision-chain' || id === 'deepseek-vision') return true
   if (id.endsWith('-vision')) return true
   if (/\bvision\b|-vision|vision-/i.test(id)) return true
-  if (name && name.includes('自动识图')) return true
+  if (name && /auto image recognition|auto vision/i.test(name)) return true
   return false
 }
 
@@ -95,7 +95,7 @@ export function clearLlmModelsCache(): void {
 export const llmGet: Record<string, Handler> = {
   '/solution-explorer/llm-models': async ({ res, llm }: RouteContext) => {
     if (!llm) {
-      json(res, { ok: false, error: { message: 'AI 模型服务不可用（宿主未挂载 llm）' } })
+      json(res, { ok: false, error: { message: 'AI model service unavailable (host has no llm mounted)' } })
       return
     }
     const now = Date.now()
@@ -114,7 +114,7 @@ export const llmGet: Record<string, Handler> = {
 export const llmPost: Record<string, Handler> = {
   '/solution-explorer/llm-generate-commit': async ({ res, payload, root, llm, getConfig }: RouteContext) => {
     if (!llm) {
-      json(res, { ok: false, error: { message: 'AI 模型服务不可用（宿主未挂载 llm）' } })
+      json(res, { ok: false, error: { message: 'AI model service unavailable (host has no llm mounted)' } })
       return
     }
     // Model route: explicit provider/model wins; otherwise fall back to the
@@ -128,7 +128,7 @@ export const llmPost: Record<string, Handler> = {
       if (sep > 0) { provider = provider || saved.slice(0, sep); model = model || saved.slice(sep + 1) }
     }
     if (!provider || !model) {
-      json(res, { ok: false, error: { message: 'AI 模型未配置' } })
+      json(res, { ok: false, error: { message: 'No AI model configured' } })
       return
     }
     if (!root) {
@@ -140,7 +140,7 @@ export const llmPost: Record<string, Handler> = {
     const diffResult = git(['diff', '--cached'], root)
     const diff = diffResult.ok ? diffResult.stdout : ''
     if (!diff.trim()) {
-      json(res, { ok: false, error: { message: '没有已暂存的变更可供生成' } })
+      json(res, { ok: false, error: { message: 'No staged changes to summarize' } })
       return
     }
 
@@ -155,19 +155,19 @@ export const llmPost: Record<string, Handler> = {
     }
 
     const system = [
-      '你是一名资深 Git 提交信息撰写助手。根据给定的变更 diff 生成一条简洁、准确、符合规范的提交信息。',
-      '硬性要求：',
-      '- 首行为类型 + 简短摘要，类型取自 Conventional Commits（feat/fix/docs/style/refactor/perf/test/chore）',
-      '- 摘要以中文撰写、以动词短语开头（如「新增」「修复」「重构」），控制在 60 字以内',
-      '- 如有必要可在摘要后另起几行补充影响范围或原因，保持精炼',
-      '- 只输出提交信息本身，不要任何解释、前后缀或代码块标记',
+      'You are an expert Git commit-message writer. Generate one concise, accurate, conventional commit message from the given diff.',
+      'Requirements:',
+      '- The first line is type + short summary; the type comes from Conventional Commits (feat/fix/docs/style/refactor/perf/test/chore)',
+      '- Write the summary in English, starting with a verb phrase (e.g. "Add", "Fix", "Refactor"), at most 60 characters',
+      '- If needed, add a few body lines after the summary with scope or reason; keep it concise',
+      '- Output only the commit message itself, with no explanation, prefix, or code fences',
     ].join('\n')
 
     const repoSection = repoGuide.trim()
-      ? `\n\n该仓库的 AGENTS.md 提交规范（优先遵循，仅作风格参考，不要逐字照搬）：\n${repoGuide.slice(0, 4000)}`
+      ? `\n\nCommit conventions from this repo's AGENTS.md (prefer them; use only as style guidance, do not copy verbatim):\n${repoGuide.slice(0, 4000)}`
       : ''
 
-    const user = `以下是本次提交的 staged diff：\n\n${diff.slice(-6000)}\n${repoSection}`
+    const user = `Here is the staged diff for this commit:\n\n${diff.slice(-6000)}\n${repoSection}`
 
     let text = ''
     let failed = false
@@ -193,7 +193,7 @@ export const llmPost: Record<string, Handler> = {
 
     const cleaned = text.trim()
     if (failed || !cleaned) {
-      json(res, { ok: false, error: { message: failed ? '模型调用失败' : '模型未返回内容' } })
+      json(res, { ok: false, error: { message: failed ? 'Model call failed' : 'Model returned no content' } })
       return
     }
     json(res, { ok: true, value: cleaned })

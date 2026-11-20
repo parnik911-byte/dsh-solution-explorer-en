@@ -325,7 +325,7 @@ function EditorBody({ zoom, setZoom }: { zoom: number; setZoom: (value: number |
 
 					color: "var(--dsw-alias-label-tertiary)"
 
-				} }, document.documentElement.lang?.startsWith("zh") ? "二进制文件无法预览差异" : "Cannot preview diff of a binary file");
+				} }, "Cannot preview diff of a binary file");
 
 const hunks = [];
 
@@ -459,11 +459,11 @@ commands.setActiveDiffState?.({ dirty: false });
 
 						})).json();
 
-						if (!result.ok) showToast("暂存块失败: " + (result.error?.message || ""), true);
+						if (!result.ok) showToast("Failed to stage hunk: " + (result.error?.message || ""), true);
 
 						else commands.refreshSCM?.();
 
-					} catch (err) { showToast("暂存块失败: " + (err.message || String(err)), true); }
+					} catch (err) { showToast("Failed to stage hunk: " + (err.message || String(err)), true); }
 
 				};
 
@@ -499,7 +499,7 @@ commands.setActiveDiffState?.({ dirty: false });
 
 					color: "var(--dsw-alias-label-tertiary)"
 
-				} }, "无差异");
+				} }, "No differences");
 
 				const editable = !dstate.diffStaged;
 
@@ -706,13 +706,13 @@ commands.setActiveDiffState?.({ dirty: false });
 
 						})).json();
 
-						if (!result.ok) showToast("保存失败: " + (result.error?.message || ""), true);
+						if (!result.ok) showToast("Save failed: " + (result.error?.message || ""), true);
 
 						else commands.refreshSCM?.();
 
 					} catch (err) {
 
-						showToast("保存失败: " + (err.message || String(err)), true);
+						showToast("Save failed: " + (err.message || String(err)), true);
 
 					}
 
@@ -764,7 +764,7 @@ commands.setActiveDiffState?.({ dirty: false });
 
 					color: r.oldDel ? "#f14c4c" : "var(--dsw-alias-label-primary)"
 
-				} }, h("span", { style: numStyle }, r.oldNum === null ? "" : String(r.oldNum)), r.old === "" ? h("span", null, NBSP) : (diffRows && diffRows.oldRuns && r.oldNum !== null ? h("span", highlighted(diffRows.oldRuns[r.oldNum - 1] ?? "")) : h("span", null, r.old))))), h("div", { style: { flex: "none", width: "28px", borderLeft: "1px solid var(--dsw-alias-border-l1)", borderRight: "1px solid var(--dsw-alias-border-l1)", display: "flex", flexDirection: "column", overflow: "hidden" } }, rows.map((r, i) => { const isStart = hunkStartRow.get(r.hunk) === i; let child = null; if (isStart) { child = h("div", { style: { display: "flex", gap: "1px" } }, h("button", { type: "button", title: "暂存块", onClick: () => stageHunk(hunks[r.hunk]), style: { border: "none", background: "transparent", cursor: "pointer", fontSize: "11px", color: "var(--dsw-alias-label-secondary)", padding: "0 2px", lineHeight: "14px" } }, "⤒"), h("button", { type: "button", title: "还原块", onClick: () => revertHunk(r.hunk), style: { border: "none", background: "transparent", cursor: "pointer", fontSize: "11px", color: "var(--dsw-alias-label-secondary)", padding: "0 2px", lineHeight: "14px" } }, "↩")); } else if (r.oldDel || r.newAdd) { child = h("span", { style: { width: "6px", height: "6px", borderRadius: "50%", display: "inline-block", background: r.oldDel ? "#f14c4c" : "#4ec9b0", opacity: 0.65 } }, null); } return h("div", { key: "g" + r.id, style: { height: "18px", lineHeight: "18px", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" } }, child); })), h("div", { className: "sol-exp-hl", style: {
+				} }, h("span", { style: numStyle }, r.oldNum === null ? "" : String(r.oldNum)), r.old === "" ? h("span", null, NBSP) : (diffRows && diffRows.oldRuns && r.oldNum !== null ? h("span", highlighted(diffRows.oldRuns[r.oldNum - 1] ?? "")) : h("span", null, r.old))))), h("div", { style: { flex: "none", width: "28px", borderLeft: "1px solid var(--dsw-alias-border-l1)", borderRight: "1px solid var(--dsw-alias-border-l1)", display: "flex", flexDirection: "column", overflow: "hidden" } }, rows.map((r, i) => { const isStart = hunkStartRow.get(r.hunk) === i; let child = null; if (isStart) { child = h("div", { style: { display: "flex", gap: "1px" } }, h("button", { type: "button", title: "Stage hunk", onClick: () => stageHunk(hunks[r.hunk]), style: { border: "none", background: "transparent", cursor: "pointer", fontSize: "11px", color: "var(--dsw-alias-label-secondary)", padding: "0 2px", lineHeight: "14px" } }, "⤒"), h("button", { type: "button", title: "Revert hunk", onClick: () => revertHunk(r.hunk), style: { border: "none", background: "transparent", cursor: "pointer", fontSize: "11px", color: "var(--dsw-alias-label-secondary)", padding: "0 2px", lineHeight: "14px" } }, "↩")); } else if (r.oldDel || r.newAdd) { child = h("span", { style: { width: "6px", height: "6px", borderRadius: "50%", display: "inline-block", background: r.oldDel ? "#f14c4c" : "#4ec9b0", opacity: 0.65 } }, null); } return h("div", { key: "g" + r.id, style: { height: "18px", lineHeight: "18px", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" } }, child); })), h("div", { className: "sol-exp-hl", style: {
 
 					flex: "1 1 50%",
 
@@ -849,7 +849,7 @@ const getState = commands.getEditorState;
 						? h(PdfPreview, { root: editorRoot, path: file ?? "", zoom, onZoom: setZoom })
 						: h(MarkdownPreview, {
 							text: st.editorContent ?? "",
-							revision: document.documentElement.lang || "zh"
+							revision: document.documentElement.lang || "en"
 						});
 
 			}
@@ -897,7 +897,7 @@ const getState = commands.getEditorState;
 
 				color: "var(--dsw-alias-label-tertiary)"
 
-			} }, document.documentElement.lang?.startsWith("zh") ? "不支持打开此文件" : "This file type is not supported");
+			} }, "This file type is not supported");
 
 			if (error) return h("div", { style: {
 

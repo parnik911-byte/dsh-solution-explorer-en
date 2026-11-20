@@ -1,229 +1,12 @@
 /**
- * Locale dictionaries for the solution explorer plugin.
+ * Locale dictionary for the solution explorer plugin (English).
  * @module dsh-solution-explorer/client/locales
  */
 
 export const NS = 'solution-explorer'
 
-export type SolutionExplorerKey = keyof typeof zh
-
-const zh = {
+const en = {
   // Panel tabs
-  'panel.explorer': '文件浏览器',
-  'panel.scm': '源代码管理',
-  'panel.scm.title': '源代码管理',
-  'panel.title': '文件浏览器',
-  'panel.empty': '打开工作区后显示文件',
-  'panel.expand': '展开面板',
-  'panel.collapse': '收起面板',
-  'panel.editor': '编辑器',
-  'panel.terminal': '终端',
-
-  // File explorer
-  'file.search': '搜索文件...',
-  'file.open': '打开文件',
-  'file.openInExplorer': '在文件管理器中打开',
-  'editor.save': '保存',
-  'editor.saving': '保存中...',
-  'editor.saved': '已保存',
-  'editor.saveFailed': '保存失败',
-  'editor.dirty': '未保存的更改',
-  'editor.saveHint': 'Ctrl+S 保存',
-  'editor.restartHint': '（插件后端未加载保存路由，请完全退出并重启 DSH 应用后再保存）',
-  'editor.untitled': '无标题',
-  'editor.noFile': '选择一个文件查看或编辑',
-  'diff.noFile': '双击源代码管理里的变更项查看差异',
-  'editor.readonly': '（只读）',
-  'editor.close': '关闭',
-  'editor.unsaved': '未保存',
-  'editor.tab.close': '关闭标签',
-  'editor.diff.before': '变更前',
-  'editor.diff.after': '变更后',
-  'editor.diff.stagedReadonly': '已暂存只读',
-  'editor.md.preview': '预览',
-  'editor.md.edit': '编辑',
-  'editor.md.copy': '复制',
-  'editor.md.copied': '已复制',
-  'editor.md.footnotes': '脚注',
-  'editor.saveOutsideWorkspace': '工作区外的文件不能保存',
-  'editor.kind.image': '图片',
-  'editor.kind.code': '代码',
-  'editor.kind.text': '纯文本',
-  'editor.kind.diff': '差异',
-  'editor.kind.markdown': 'Markdown',
-  'editor.kind.html': 'HTML',
-  'editor.html.loading': '正在准备 HTML 预览...',
-  'editor.html.failed': 'HTML 预览失败',
-  'editor.pdf.loading': '正在渲染 PDF...',
-  'editor.pdf.failed': 'PDF 预览失败',
-  'editor.kind.pdf': 'PDF',
-  'editor.zoomIn': '放大',
-  'editor.zoomOut': '缩小',
-  'editor.zoomReset': '复位 100%',
-  'editor.tab.closeTitle': '关闭标签',
-  'editor.tab.closeDirty': '{name} 有未保存的修改，仍要关闭吗？',
-  'editor.tab.closeOk': '放弃并关闭',
-  'tree.collapse': '收起全部',
-  'tree.expand': '展开全部',
-  'tree.newFile': '新建文件',
-  'tree.newFileName': '文件名',
-  'tree.newDirName': '文件夹名',
-  'tree.newDir': '新建文件夹',
-  'tree.refresh': '刷新',
-  'search.noMatch': '无匹配文件',
-  'search.prompt': '输入关键词搜索文件',
-  'loading': '加载中...',
-  'error.load': '加载文件树失败',
-  'error.read': '读取文件失败',
-  'context.copyPath': '复制路径',
-  'context.reveal': '在文件管理器中显示',
-  'context.open': '打开',
-  'context.openWith': '打开方式',
-  'context.properties': '属性',
-  'context.openFailed': '打开失败',
-
-  // Terminal
-  'terminal.new': '新建终端',
-  'terminal.close': '关闭终端',
-  'terminal.empty': '没有终端，点击 + 新建',
-  'terminal.unsupported': '当前环境不支持嵌入式终端',
-  'terminal.startFail': '无法启动终端：',
-  'terminal.shellNotFound': '找不到 shell 可执行文件（请检查设置里的「默认 Shell」）',
-  'terminal.rebootFail': '终端重建失败',
-
-  // SCM
-  'scm.staged': '暂存变更',
-  'scm.staged.none': '没有暂存变更',
-  'scm.changes': '更改',
-  'scm.changes.none': '没有更改',
-  'scm.untracked': '未跟踪',
-  'scm.commit.placeholder': '提交变更内容',
-  'scm.commit.button': '提交',
-  'scm.commit.empty': '请输入提交信息',
-  'scm.stage': '暂存',
-  'scm.unstage': '取消暂存',
-  'scm.discard': '放弃变更',
-  'scm.stageAll': '全部暂存',
-  'scm.unstageAll': '全部取消暂存',
-  'scm.discardAll': '放弃所有变更',
-  'scm.discardAllConfirm': '确定放弃所有变更？此操作不可撤销。',
-  'scm.refresh': '刷新',
-  'scm.branch': '分支',
-  'scm.notRepo': '不是 Git 仓库',
-  'scm.committing': '提交中...',
-  'scm.commitSuccess': '提交成功',
-  'scm.commitFailed': '提交失败',
-  'scm.diff.title': '差异',
-  'scm.log.title': '提交历史',
-  'scm.log.empty': '没有提交记录',
-  'scm.status.M': '修改',
-  'scm.status.A': '新增',
-  'scm.status.D': '删除',
-  'scm.status.R': '重命名',
-  'scm.status.?': '未跟踪',
-  'scm.status.U': '未合并',
-  'scm.repository': '存储库',
-  'scm.repository.branch': '分支',
-  'scm.repository.commits': '最近提交',
-
-  // Git init
-  'scm.init.button': '初始化 Git 仓库',
-  'scm.init.confirm': '确定在此目录初始化 Git 仓库？',
-  'scm.init.done': 'Git 仓库初始化成功',
-
-  // Sync
-  'scm.sync.fetch': '抓取',
-  'scm.sync.pull': '拉取',
-  'scm.sync.push': '推送',
-  'scm.sync.sync': '同步',
-  'scm.sync.pullConfirm': '确定拉取远程更改？',
-  'scm.sync.pushConfirm': '确定推送到远程？此操作会公开你的本地提交。',
-  'scm.sync.syncConfirm': '确定同步（先拉取再推送）？',
-  'scm.sync.done': '操作完成',
-  'scm.sync.upToDate': '已是最新',
-  'scm.sync.noRemote': '此仓库没有配置远程仓库，请先添加远程。',
-
-  // Remote
-  'scm.remote.title': '远程仓库',
-  'scm.remote.none': '没有配置远程仓库',
-  'scm.remote.add': '添加远程',
-  'scm.remote.name': '名称',
-  'scm.remote.url': 'URL',
-  'scm.remote.addBtn': '添加',
-  'scm.remote.remove': '删除',
-  'scm.remote.setUrl': '修改地址',
-  'scm.remote.removeConfirm': '确定删除远程仓库 {name}？',
-  'scm.remote.invalidUrl': '远程 URL 格式无效',
-
-  // Branch
-  'scm.branch.title': '分支',
-  'scm.branch.local': '本地分支',
-  'scm.branch.remote': '远程分支',
-  'scm.branch.create': '新建分支',
-  'scm.branch.rename': '重命名',
-  'scm.branch.delete': '删除',
-  'scm.branch.merge': '合并',
-  'scm.branch.publish': '发布',
-  'scm.branch.name': '分支名',
-  'scm.branch.from': '来源（可选）',
-  'scm.branch.newName': '新名称',
-  'scm.branch.createBtn': '创建',
-  'scm.branch.checkout': '切换',
-  'scm.branch.deleteConfirm': '确定删除分支 {name}？',
-  'scm.branch.mergeConfirm': '确定将 {name} 合并到当前分支？',
-  'scm.branch.publishConfirm': '确定发布分支 {name} 到 origin？',
-
-  // Merge conflicts
-  'scm.merge.changes': '合并冲突',
-  'scm.merge.none': '没有冲突',
-  'scm.branch.tags': '标记',
-
-  // Settings page
-  'settings.explorer': '资源管理器',
-  'settings.width.label': '面板宽度',
-  'settings.width.hint': '264–420px，默认 280（拖拽可加宽到 560）',
-  'settings.autoOpen.label': '自动打开',
-  'settings.autoOpen.hint': '会话激活时自动展开右侧面板',
-  'settings.patterns.label': '过滤模式',
-  'settings.patterns.hint': '从文件树隐藏的名称模式，逗号分隔',
-  'settings.hideOfficialRightbarExpand.label': '隐藏官方"打开右侧边栏"按钮',
-  'settings.hideOfficialRightbarExpand.hint': '右栏折叠时隐藏 DSH 自带的展开按钮（右栏服务仍保留）',
-  'settings.reset': '重置',
-  'settings.save': '保存',
-  'settings.saved': '✓ 已保存',
-  'settings.desc': '右侧边栏插件：文件浏览器 + 源代码管理 + 编辑器。',
-  'settings.intro': '配置 dsh-solution-explorer 的个性化设置，变更即时生效。',
-  'settings.group.appearance': '外观',
-  'settings.group.appearance.desc': '右侧面板的宽度与自动打开行为。',
-  'settings.group.tree': '文件树',
-  'settings.group.tree.desc': '控制文件树中显示的内容。',
-  'settings.group.terminal': '终端',
-  'settings.group.terminal.desc': '底部终端面板的行为（ConPTY，需要 DSH subprocess 服务）。',
-  'settings.terminal.shell.label': '默认 Shell',
-  'settings.terminal.shell.hint': 'pwsh / powershell / cmd / bash；留空按平台自动选择',
-  'settings.terminal.shell.auto': '自动',
-  'settings.terminal.height.label': '终端高度 (px)',
-  'settings.terminal.height.hint': '120–480（可在面板上拖拽调整）',
-  'settings.terminal.maxHeight.label': '终端最大高度 (px)',
-  'settings.terminal.maxHeight.hint': '240–1080（拖拽上限）',
-  'settings.terminal.tabs.label': '终端标签上限',
-  'settings.terminal.tabs.hint': '2–16',
-  'settings.hidden.label': '显示隐藏文件',
-  'settings.hidden.hint': '显示以 . 开头的文件与目录（含 .git）以及 node_modules',
-  'settings.group.ai': 'AI 提交描述',
-  'settings.group.ai.desc': '用宿主已配置的模型从 staged diff 生成提交信息。',
-  'settings.ai.model.label': '生成描述模型',
-  'settings.ai.model.hint': '选择用于生成提交信息的模型；留空禁用该功能',
-  'settings.ai.unavailable': '宿主未提供 AI 模型服务',
-  'settings.ai.none': '（未配置任何模型）',
-  'scm.ai.gen': 'AI 生成提交信息',
-  'scm.ai.generating': '生成中...',
-  'scm.ai.nostaged': '没有已暂存的变更，无法生成',
-  'scm.ai.unconfigured': '请先在设置「AI 提交描述」中选择模型',
-  'scm.ai.failed': 'AI 生成失败：',
-}
-
-const en: Record<SolutionExplorerKey, string> = {
   'panel.explorer': 'Explorer',
   'panel.scm': 'Source Control',
   'panel.scm.title': 'Source Control',
@@ -234,6 +17,7 @@ const en: Record<SolutionExplorerKey, string> = {
   'panel.editor': 'Editor',
   'panel.terminal': 'Terminal',
 
+  // File explorer
   'file.search': 'Search files...',
   'file.open': 'Open file',
   'file.openInExplorer': 'Open in file explorer',
@@ -305,6 +89,7 @@ const en: Record<SolutionExplorerKey, string> = {
   'terminal.shellNotFound': 'Shell executable not found (check "Default shell" in settings)',
   'terminal.rebootFail': 'Terminal rebuild failed',
 
+  // SCM
   'scm.staged': 'Staged Changes',
   'scm.staged.none': 'No staged changes',
   'scm.changes': 'Changes',
@@ -339,10 +124,12 @@ const en: Record<SolutionExplorerKey, string> = {
   'scm.repository.branch': 'Branch',
   'scm.repository.commits': 'Recent Commits',
 
+  // Git init
   'scm.init.button': 'Initialize Git Repository',
   'scm.init.confirm': 'Initialize a git repository in this directory?',
   'scm.init.done': 'Git repository initialized',
 
+  // Sync
   'scm.sync.fetch': 'Fetch',
   'scm.sync.pull': 'Pull',
   'scm.sync.push': 'Push',
@@ -354,6 +141,7 @@ const en: Record<SolutionExplorerKey, string> = {
   'scm.sync.upToDate': 'Up to date',
   'scm.sync.noRemote': 'This repository has no remote. Add one first.',
 
+  // Remote
   'scm.remote.title': 'Remotes',
   'scm.remote.none': 'No remotes configured',
   'scm.remote.add': 'Add remote',
@@ -365,6 +153,7 @@ const en: Record<SolutionExplorerKey, string> = {
   'scm.remote.removeConfirm': 'Remove remote {name}?',
   'scm.remote.invalidUrl': 'Invalid remote URL',
 
+  // Branch
   'scm.branch.title': 'Branches',
   'scm.branch.local': 'Local Branches',
   'scm.branch.remote': 'Remote Branches',
@@ -382,6 +171,7 @@ const en: Record<SolutionExplorerKey, string> = {
   'scm.branch.mergeConfirm': 'Merge {name} into the current branch?',
   'scm.branch.publishConfirm': 'Publish branch {name} to origin?',
 
+  // Merge conflicts
   'scm.merge.changes': 'Merge Changes',
   'scm.merge.none': 'No conflicts',
   'scm.branch.tags': 'Tags',
@@ -431,15 +221,14 @@ const en: Record<SolutionExplorerKey, string> = {
   'scm.ai.failed': 'AI generation failed: ',
 }
 
-export const dictionaries = { zh, en }
+export type SolutionExplorerKey = keyof typeof en
 
-let currentLang: 'zh' | 'en' = 'zh'
-
-export function setLanguage(lang: 'zh' | 'en'): void {
-  currentLang = lang
-}
+/**
+ * DSH's locale registry requires both shipped locales (`zh`/`en`); this fork
+ * is English-only, so `zh` also serves the English copy.
+ */
+export const dictionaries = { en, zh: en }
 
 export function t(key: SolutionExplorerKey): string {
-  const dict = currentLang === 'zh' ? zh : en
-  return dict[key] ?? key
+  return en[key] ?? key
 }

@@ -72,23 +72,23 @@ export function registerScmCommands(deps: ScmCommandsDeps): () => void {
 
   commands.commitCheckout = async (hash) => {
     if (!hash) return;
-    const zh = document.documentElement.lang?.startsWith("zh");
-    const ok = await showConfirm({ title: "Checkout", okText: "Checkout", message: zh ? `Checkout 到 ${hash.substring(0, 8)}？\n注意：将进入 detached HEAD 状态（不在任何分支上）。` : `Checkout ${hash.substring(0, 8)}?\nNote: this enters a detached HEAD state.` });
+
+    const ok = await showConfirm({ title: "Checkout", okText: "Checkout", message: `Checkout ${hash.substring(0, 8)}?\nNote: this enters a detached HEAD state.` });
     if (!ok) return;
     const result = await (await fetch("/solution-explorer/git-branch-checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state), name: hash }) })).json();
-    if (!result.ok) showToast(result.error?.message || "切换失败", true);
+    if (!result.ok) showToast(result.error?.message || "Checkout failed", true);
     else { await deps.loadGitStatus(deps.actionsDeps); await deps.loadRecentCommits(deps.historyDeps); }
   };
 
   commands.gitInit = async () => {
     if (!(await showConfirm({ title: t("scm.init.button"), message: t("scm.init.confirm"), okText: t("scm.init.button") }))) return;
     const result = await (await fetch("/solution-explorer/git-init", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state) }) })).json();
-    if (!result.ok) showToast(result.error?.message || "初始化失败", true);
+    if (!result.ok) showToast(result.error?.message || "Initialization failed", true);
     else { await deps.loadRepos(deps.actionsDeps); await deps.loadGitStatus(deps.actionsDeps); commands.refresh(); }
   };
   commands.fetch = async () => {
     const result = await (await fetch("/solution-explorer/git-fetch", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state) }) })).json();
-    if (!result.ok) showToast(result.error?.message || "抓取失败", true);
+    if (!result.ok) showToast(result.error?.message || "Fetch failed", true);
     else {
       await deps.loadGitStatus(deps.actionsDeps); await deps.loadBranches(deps.branchesDeps);
       const out = (result.value || "").trim();
@@ -98,7 +98,7 @@ export function registerScmCommands(deps: ScmCommandsDeps): () => void {
   commands.pull = async () => {
     if (!(await showConfirm({ title: t("scm.sync.pull"), message: t("scm.sync.pullConfirm"), okText: t("scm.sync.pull") }))) return;
     const result = await (await fetch("/solution-explorer/git-pull", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state) }) })).json();
-    if (!result.ok) showToast(result.error?.message || "拉取失败", true);
+    if (!result.ok) showToast(result.error?.message || "Pull failed", true);
     else {
       await deps.loadGitStatus(deps.actionsDeps); await deps.loadRecentCommits(deps.historyDeps);
       const out = (result.value || "").trim();
@@ -108,7 +108,7 @@ export function registerScmCommands(deps: ScmCommandsDeps): () => void {
   commands.push = async () => {
     if (!(await showConfirm({ title: t("scm.sync.push"), message: t("scm.sync.pushConfirm"), okText: t("scm.sync.push") }))) return;
     const result = await (await fetch("/solution-explorer/git-push", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state) }) })).json();
-    if (!result.ok) showToast(result.error?.message || "推送失败", true);
+    if (!result.ok) showToast(result.error?.message || "Push failed", true);
     else {
       await deps.loadGitStatus(deps.actionsDeps);
       const out = (result.value || "").trim();
@@ -118,7 +118,7 @@ export function registerScmCommands(deps: ScmCommandsDeps): () => void {
   commands.sync = async () => {
     if (!(await showConfirm({ title: t("scm.sync.sync"), message: t("scm.sync.syncConfirm"), okText: t("scm.sync.sync") }))) return;
     const result = await (await fetch("/solution-explorer/git-sync", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state) }) })).json();
-    if (!result.ok) showToast(result.error?.message || "同步失败", true);
+    if (!result.ok) showToast(result.error?.message || "Sync failed", true);
     else {
       await deps.loadGitStatus(deps.actionsDeps); await deps.loadRecentCommits(deps.historyDeps);
       const out = (result.value || "").trim();
@@ -131,19 +131,19 @@ export function registerScmCommands(deps: ScmCommandsDeps): () => void {
   commands.remoteAdd = async () => {
     if (!state.scm.remoteName.trim() || !state.scm.remoteUrl.trim()) return;
     const result = await (await fetch("/solution-explorer/git-remote-add", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state), name: state.scm.remoteName.trim(), url: state.scm.remoteUrl.trim() }) })).json();
-    if (!result.ok) showToast(result.error?.message || "添加远程失败", true);
+    if (!result.ok) showToast(result.error?.message || "Failed to add remote", true);
     else { state.scm.remoteName = ""; state.scm.remoteUrl = ""; await deps.loadRemotes(deps.branchesDeps); render(); }
   };
   commands.remoteRemove = async (name) => {
     if (!(await showConfirm({ title: t("scm.remote.title"), message: t("scm.remote.removeConfirm").replace("{name}", name), okText: t("scm.remote.remove"), danger: true }))) return;
     const result = await (await fetch("/solution-explorer/git-remote-remove", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state), name }) })).json();
-    if (!result.ok) showToast(result.error?.message || "删除远程失败", true); else { await deps.loadRemotes(deps.branchesDeps); render(); }
+    if (!result.ok) showToast(result.error?.message || "Failed to remove remote", true); else { await deps.loadRemotes(deps.branchesDeps); render(); }
   };
   commands.remoteSetUrl = async (name) => {
-    const url = await showPrompt({ title: t("scm.remote.title"), message: "新的 URL（" + name + "）", placeholder: "https://… 或 git@…" });
+    const url = await showPrompt({ title: t("scm.remote.title"), message: "New URL (" + name + ")", placeholder: "https://… or git@…" });
     if (!url || !url.trim()) return;
     const result = await (await fetch("/solution-explorer/git-remote-set-url", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state), name, url: url.trim() }) })).json();
-    if (!result.ok) showToast(result.error?.message || "修改地址失败", true); else await deps.loadRemotes(deps.branchesDeps);
+    if (!result.ok) showToast(result.error?.message || "Failed to update URL", true); else await deps.loadRemotes(deps.branchesDeps);
   };
   commands.branchPanel = async () => { state.scm.branchPanelOpen = !state.scm.branchPanelOpen; if (state.scm.branchPanelOpen) { await deps.loadBranches(deps.branchesDeps); await deps.loadTags(deps.branchesDeps); } render(); };
   commands.branchName = (v) => { state.scm.branchName = v; };
@@ -153,12 +153,12 @@ export function registerScmCommands(deps: ScmCommandsDeps): () => void {
     const body: { root: string; name: string; from?: string } = { root: gitRoot(state), name: state.scm.branchName.trim() };
     if (state.scm.branchFrom.trim()) body.from = state.scm.branchFrom.trim();
     const result = await (await fetch("/solution-explorer/git-branch-create", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) })).json();
-    if (!result.ok) showToast(result.error?.message || "创建分支失败", true);
+    if (!result.ok) showToast(result.error?.message || "Failed to create branch", true);
     else { state.scm.branchName = ""; state.scm.branchFrom = ""; await deps.loadBranches(deps.branchesDeps); render(); }
   };
   commands.branchCheckout = async (name, isRemote) => {
     const result = await (await fetch("/solution-explorer/git-branch-checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state), name, track: isRemote === true }) })).json();
-    if (!result.ok) showToast(result.error?.message || "切换失败", true);
+    if (!result.ok) showToast(result.error?.message || "Checkout failed", true);
     else {
       // Order matters: update state, rebuild the DOM, then load commits into the
       // fresh list node — loading before render() lets render wipe the result
@@ -174,28 +174,28 @@ export function registerScmCommands(deps: ScmCommandsDeps): () => void {
     let result = await (await fetch("/solution-explorer/git-branch-delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state), name }) })).json();
     // Safe delete (-d) refuses unmerged branches — offer a forced delete (-D).
     if (!result.ok && String(result.error?.message || "").includes("not fully merged")) {
-      const zh = document.documentElement.lang?.startsWith("zh");
-      const ok = await showConfirm({ title: t("scm.branch.title"), message: zh ? "该分支有未合并的提交，确定强制删除？此操作不可撤销。" : "This branch has unmerged commits. Force delete? This cannot be undone.", okText: zh ? "强制删除" : "Force delete", danger: true });
+  
+      const ok = await showConfirm({ title: t("scm.branch.title"), message: "This branch has unmerged commits. Force delete? This cannot be undone.", okText: "Force delete", danger: true });
       if (!ok) return;
       result = await (await fetch("/solution-explorer/git-branch-delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state), name, force: true }) })).json();
     }
-    if (!result.ok) showToast(result.error?.message || "删除失败", true); else { await deps.loadBranches(deps.branchesDeps); render(); }
+    if (!result.ok) showToast(result.error?.message || "Delete failed", true); else { await deps.loadBranches(deps.branchesDeps); render(); }
   };
   commands.branchRename = async (name) => {
     const newName = await showPrompt({ title: t("scm.branch.title"), message: t("scm.branch.newName") + " (" + name + ")", placeholder: name });
     if (!newName || !newName.trim()) return;
     const result = await (await fetch("/solution-explorer/git-branch-rename", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state), oldName: name, newName: newName.trim() }) })).json();
-    if (!result.ok) showToast(result.error?.message || "重命名失败", true); else { await deps.loadBranches(deps.branchesDeps); render(); }
+    if (!result.ok) showToast(result.error?.message || "Rename failed", true); else { await deps.loadBranches(deps.branchesDeps); render(); }
   };
   commands.branchMerge = async (name) => {
     if (!(await showConfirm({ title: t("scm.branch.title"), message: t("scm.branch.mergeConfirm").replace("{name}", name), okText: t("scm.branch.merge") }))) return;
     const result = await (await fetch("/solution-explorer/git-branch-merge", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state), name }) })).json();
-    if (!result.ok) showToast(result.error?.message || "合并失败", true); else { await deps.loadGitStatus(deps.actionsDeps); await deps.loadRecentCommits(deps.historyDeps); }
+    if (!result.ok) showToast(result.error?.message || "Merge failed", true); else { await deps.loadGitStatus(deps.actionsDeps); await deps.loadRecentCommits(deps.historyDeps); }
   };
   commands.branchPublish = async (name) => {
     if (!(await showConfirm({ title: t("scm.branch.title"), message: t("scm.branch.publishConfirm").replace("{name}", name), okText: t("scm.branch.publish") }))) return;
     const result = await (await fetch("/solution-explorer/git-branch-publish", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state), name }) })).json();
-    if (!result.ok) showToast(result.error?.message || "发布失败", true); else await deps.loadBranches(deps.branchesDeps);
+    if (!result.ok) showToast(result.error?.message || "Publish failed", true); else await deps.loadBranches(deps.branchesDeps);
   };
 
   commands.commitsScroll = (evt) => {
@@ -278,7 +278,7 @@ export function registerScmCommands(deps: ScmCommandsDeps): () => void {
 
   commands.discardAll = async () => {
     const all = [...state.scm.gitStatus?.unstaged || [], ...state.scm.gitStatus?.untracked || []].map((i) => i.path);
-    if (all.length && (await showConfirm({ title: t("scm.changes"), message: t("scm.discardAllConfirm"), okText: document.documentElement.lang?.startsWith("zh") ? "放弃" : "Discard", danger: true }))) deps.doDiscard(all, deps.actionsDeps);
+    if (all.length && (await showConfirm({ title: t("scm.changes"), message: t("scm.discardAllConfirm"), okText: "Discard", danger: true }))) deps.doDiscard(all, deps.actionsDeps);
   };
 
   commands.toggleSection = (id) => {

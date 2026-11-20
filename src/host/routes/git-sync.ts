@@ -12,7 +12,7 @@ export const gitSyncPost: Record<string, Handler> = {
     if (!root) { json(res, { ok: false, error: { message: 'root required' } }); return }
     const headRef = git(['rev-parse', '--abbrev-ref', 'HEAD'], root)
     if (headRef.ok && headRef.stdout === 'HEAD') {
-      json(res, { ok: false, error: { message: '当前不在任何分支上（detached HEAD），请先在分支面板切换到分支再拉取' } }); return
+      json(res, { ok: false, error: { message: 'Detached HEAD (not on any branch) — switch to a branch in the branches panel before pulling' } }); return
     }
     const result = git(['pull'], root)
     json(res, result.ok ? { ok: true, value: result.stdout } : { ok: false, error: { message: result.error } })
@@ -21,7 +21,7 @@ export const gitSyncPost: Record<string, Handler> = {
     if (!root) { json(res, { ok: false, error: { message: 'root required' } }); return }
     const headRef = git(['rev-parse', '--abbrev-ref', 'HEAD'], root)
     if (headRef.ok && headRef.stdout === 'HEAD') {
-      json(res, { ok: false, error: { message: '当前不在任何分支上（detached HEAD），请先在分支面板切换到分支再推送' } }); return
+      json(res, { ok: false, error: { message: 'Detached HEAD (not on any branch) — switch to a branch in the branches panel before pushing' } }); return
     }
     const result = git(['push'], root)
     json(res, result.ok ? { ok: true, value: result.stdout } : { ok: false, error: { message: result.error } })
@@ -30,7 +30,7 @@ export const gitSyncPost: Record<string, Handler> = {
     if (!root) { json(res, { ok: false, error: { message: 'root required' } }); return }
     const headRef = git(['rev-parse', '--abbrev-ref', 'HEAD'], root)
     if (headRef.ok && headRef.stdout === 'HEAD') {
-      json(res, { ok: false, error: { message: '当前不在任何分支上（detached HEAD），请先在分支面板切换到分支再同步' } }); return
+      json(res, { ok: false, error: { message: 'Detached HEAD (not on any branch) — switch to a branch in the branches panel before syncing' } }); return
     }
     // VS Code "Sync Changes": pull first, then push; a failed pull stops.
     const pull = git(['pull'], root)

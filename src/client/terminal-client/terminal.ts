@@ -44,7 +44,7 @@ export interface TerminalController {
 }
 
 export function createTerminalController({ state, render }: TerminalDeps): TerminalController {
-  const termLang = () => document.documentElement.lang?.startsWith("zh") === true;
+
   const terminalCwd = () => gitRoot(state) || state.root;
   const terminalCellSize = (el) => ({
     cols: Math.max(20, Math.floor((el?.clientWidth || 320) / TERM_CELL_W)),
@@ -281,7 +281,7 @@ export function createTerminalController({ state, render }: TerminalDeps): Termi
           // build (the shared stream route is new) — a page
           // refresh cannot fix that; the app process must
           // fully restart.
-          showToast(termLang() ? "宿主进程版本过旧，终端输出不可用——请完全退出并重启 DSH 应用" : "Host is outdated — fully restart DSH to enable terminal output");
+          showToast("Host is outdated — fully restart DSH to enable terminal output");
           return;
         }
         const reader = resp.body.getReader();
@@ -325,7 +325,7 @@ export function createTerminalController({ state, render }: TerminalDeps): Termi
                 if (state.terminal.termOutputFlush !== null) { cancelAnimationFrame(state.terminal.termOutputFlush); state.terminal.termOutputFlush = null; }
                 flushTerminalOutput();
                 tab.exited = true;
-                tab.term.write("\r\n\x1b[90m[" + (termLang() ? "进程已退出" : "process exited") + "]\x1b[0m\r\n");
+                tab.term.write("\r\n\x1b[90m[" + "process exited" + "]\x1b[0m\r\n");
                 renderTerminalTabs();
               }
             }
@@ -347,9 +347,9 @@ export function createTerminalController({ state, render }: TerminalDeps): Termi
   const addTerminalTab = async () => {
     if (state.terminal.terminalBusy) return;
     if (!state.terminal.terminalSupported) { showToast(t("terminal.unsupported")); return; }
-    if (state.root === "") { showToast(termLang() ? "先打开工作区再使用终端" : "Open a workspace first"); return; }
+    if (state.root === "") { showToast("Open a workspace first"); return; }
     if (state.terminal.terminalTabs.length >= state.terminal.terminalMaxTabs) {
-      showToast(termLang() ? "最多 " + state.terminal.terminalMaxTabs + " 个终端标签" : "Up to " + state.terminal.terminalMaxTabs + " terminal tabs");
+      showToast("Up to " + state.terminal.terminalMaxTabs + " terminal tabs");
       return;
     }
     state.terminal.terminalBusy = true;

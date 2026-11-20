@@ -8,7 +8,7 @@ export const branchRemotePost: Record<string, Handler> = {
     const remoteUrl = typeof payload.url === 'string' ? payload.url : ''
     if (!root || !name || !remoteUrl) { json(res, { ok: false, error: { message: 'root, name and url required' } }); return }
     if (!isValidRefName(name) || !isValidRemoteUrl(remoteUrl)) {
-      json(res, { ok: false, error: { message: '远程名称或 URL 格式无效' } }); return
+      json(res, { ok: false, error: { message: 'Invalid remote name or URL' } }); return
     }
     const result = git(['remote', 'add', name, remoteUrl], root)
     json(res, result.ok ? { ok: true, value: true } : { ok: false, error: { message: result.error } })
@@ -25,7 +25,7 @@ export const branchRemotePost: Record<string, Handler> = {
     const remoteUrl = typeof payload.url === 'string' ? payload.url : ''
     if (!root || !name || !remoteUrl) { json(res, { ok: false, error: { message: 'root, name and url required' } }); return }
     if (!isValidRefName(name) || !isValidRemoteUrl(remoteUrl)) {
-      json(res, { ok: false, error: { message: '远程名称或 URL 格式无效' } }); return
+      json(res, { ok: false, error: { message: 'Invalid remote name or URL' } }); return
     }
     const result = git(['remote', 'set-url', name, remoteUrl], root)
     json(res, result.ok ? { ok: true, value: true } : { ok: false, error: { message: result.error } })
@@ -34,7 +34,7 @@ export const branchRemotePost: Record<string, Handler> = {
     const name = typeof payload.name === 'string' ? payload.name : ''
     const from = typeof payload.from === 'string' && payload.from ? payload.from : ''
     if (!root || !name) { json(res, { ok: false, error: { message: 'root and name required' } }); return }
-    if (!isValidRefName(name)) { json(res, { ok: false, error: { message: '分支名称无效' } }); return }
+    if (!isValidRefName(name)) { json(res, { ok: false, error: { message: 'Invalid branch name' } }); return }
     const args = ['branch', name]
     if (from) { if (!isValidRefName(from)) { json(res, { ok: false, error: { message: 'invalid from ref' } }); return } args.push(from) }
     const result = git(args, root)
@@ -44,12 +44,12 @@ export const branchRemotePost: Record<string, Handler> = {
     const name = typeof payload.name === 'string' ? payload.name : ''
     const track = payload.track === true
     if (!root || !name) { json(res, { ok: false, error: { message: 'root and name required' } }); return }
-    if (!isValidRefName(name)) { json(res, { ok: false, error: { message: '引用名称无效' } }); return }
+    if (!isValidRefName(name)) { json(res, { ok: false, error: { message: 'Invalid ref name' } }); return }
     // Refuse to switch while the working tree is dirty — git would risk
     // overwriting uncommitted changes with a cryptic error.
     const dirty = git(['status', '--porcelain'], root)
     if (dirty.ok && dirty.stdout.trimEnd() !== '') {
-      json(res, { ok: false, error: { message: '工作区有未提交的更改，请先提交或放弃后再切换分支' } }); return
+      json(res, { ok: false, error: { message: 'Workspace has uncommitted changes — commit or discard them before switching branches' } }); return
     }
     // Remote branch click (track=true): create a local tracking branch
     // instead of detaching HEAD — VS Code style checkout.
@@ -63,12 +63,12 @@ export const branchRemotePost: Record<string, Handler> = {
     let target = name
     if (target.endsWith('/HEAD')) {
       const sym = git(['symbolic-ref', '--short', 'refs/remotes/' + target], root)
-      if (!sym.ok) { json(res, { ok: false, error: { message: '无法解析 ' + target } }); return }
+      if (!sym.ok) { json(res, { ok: false, error: { message: 'Cannot resolve ' + target } }); return }
       target = sym.stdout.trimEnd()
     }
     const short = target.includes('/') ? target.slice(target.indexOf('/') + 1) : target
     if (short === 'HEAD' || !isValidRefName(short)) {
-      json(res, { ok: false, error: { message: '分支名称无效' } }); return
+      json(res, { ok: false, error: { message: 'Invalid branch name' } }); return
     }
     const localExists = git(['rev-parse', '--verify', '--quiet', 'refs/heads/' + short], root).ok
     const args = localExists ? ['checkout', short] : ['checkout', '--track', target]
@@ -79,7 +79,7 @@ export const branchRemotePost: Record<string, Handler> = {
     const name = typeof payload.name === 'string' ? payload.name : ''
     const force = payload.force === true
     if (!root || !name) { json(res, { ok: false, error: { message: 'root and name required' } }); return }
-    if (!isValidRefName(name)) { json(res, { ok: false, error: { message: '分支名称无效' } }); return }
+    if (!isValidRefName(name)) { json(res, { ok: false, error: { message: 'Invalid branch name' } }); return }
     const result = git(['branch', force ? '-D' : '-d', name], root)
     json(res, result.ok ? { ok: true, value: true } : { ok: false, error: { message: result.error } })
   },
@@ -88,7 +88,7 @@ export const branchRemotePost: Record<string, Handler> = {
     const newName = typeof payload.newName === 'string' ? payload.newName : ''
     if (!root || !oldName || !newName) { json(res, { ok: false, error: { message: 'root, oldName and newName required' } }); return }
     if (!isValidRefName(oldName) || !isValidRefName(newName)) {
-      json(res, { ok: false, error: { message: '分支名称无效' } }); return
+      json(res, { ok: false, error: { message: 'Invalid branch name' } }); return
     }
     const result = git(['branch', '-m', oldName, newName], root)
     json(res, result.ok ? { ok: true, value: true } : { ok: false, error: { message: result.error } })
@@ -96,14 +96,14 @@ export const branchRemotePost: Record<string, Handler> = {
   '/solution-explorer/git-branch-merge': async ({ res, payload, root }) => {
     const name = typeof payload.name === 'string' ? payload.name : ''
     if (!root || !name) { json(res, { ok: false, error: { message: 'root and name required' } }); return }
-    if (!isValidRefName(name)) { json(res, { ok: false, error: { message: '分支名称无效' } }); return }
+    if (!isValidRefName(name)) { json(res, { ok: false, error: { message: 'Invalid branch name' } }); return }
     const result = git(['merge', name], root)
     json(res, result.ok ? { ok: true, value: true } : { ok: false, error: { message: result.error } })
   },
   '/solution-explorer/git-branch-publish': async ({ res, payload, root }) => {
     const name = typeof payload.name === 'string' ? payload.name : ''
     if (!root || !name) { json(res, { ok: false, error: { message: 'root and name required' } }); return }
-    if (!isValidRefName(name)) { json(res, { ok: false, error: { message: '分支名称无效' } }); return }
+    if (!isValidRefName(name)) { json(res, { ok: false, error: { message: 'Invalid branch name' } }); return }
     const result = git(['push', '-u', 'origin', name], root)
     json(res, result.ok ? { ok: true, value: true } : { ok: false, error: { message: result.error } })
   },

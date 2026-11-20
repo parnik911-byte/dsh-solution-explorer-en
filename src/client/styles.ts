@@ -165,7 +165,7 @@ export const STYLES = `
 .sol-exp-rail-btn { flex:none; align-self:center; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:none; border-radius:6px; background:transparent; color:var(--dsw-alias-label-tertiary); cursor:pointer; padding:0; }
 .sol-exp-rail-btn:hover { color:var(--dsw-alias-label-primary); background:var(--dsw-alias-interactive-bg-hover); }
 /* The shell mirrors its panel glyph for the right sidebar (scaleX(-1) on its
-   own 打开/收起右侧边栏 buttons); ours is a right column too, so mirror both
+   own open/collapse right-sidebar buttons); ours is a right column too, so mirror both
    toggles instead of showing a left-panel arrow. */
 .sol-exp-rail-btn svg, .sol-exp-panel-toggle svg { transform: scaleX(-1); }
 .sol-exp-rail-icon { position:relative; flex:none; align-self:center; width:36px; height:36px; display:flex; align-items:center; justify-content:center; border:none; border-radius:6px; background:transparent; color:var(--dsw-alias-label-tertiary); cursor:pointer; padding:0; }
@@ -426,7 +426,7 @@ export const STYLES = `
 .sol-exp-repo-branch { flex:none; font-size:11px; color:var(--dsw-alias-label-tertiary); }
 .sol-exp-rename-input { flex:1; min-width:0; box-sizing:border-box; border:1px solid var(--dsw-alias-brand-primary); border-radius:4px; background:var(--dsw-alias-bg-input); color:var(--dsw-alias-label-primary); font:inherit; font-size:13px; line-height:20px; padding:0 4px; outline:none; }
 
-/* Settings page ("资源管理器" section) — flat grouped cards matching the
+/* Settings page ("Explorer" section) — flat grouped cards matching the
    native notification settings page style. */
 .sol-set-root { display: flex; flex-direction: column; gap: 12px; max-width: 760px; color: var(--dsw-alias-label-primary); padding: 0 2px; }
 .sol-set-heading { margin: 0; font-size: 18px; font-weight: 600; }

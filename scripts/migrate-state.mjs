@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 /**
  * Migrate closure `let` state in src/client/panel.ts into the shared
- * store instance (state.域.x) — TypeScript-AST driven.
+ * store instance (state.<domain>.x) — TypeScript-AST driven.
  *
  * For each variable in the mapping:
  *   1. removes its `let name = ...;` declaration line
- *   2. rewrites every remaining identifier reference to `state.域.x`
+ *   2. rewrites every remaining identifier reference to `state.<domain>.x`
  *
  * AST-driven: identifiers are located via the TS AST, so string literals,
  * template content, regex literals and comments are NEVER touched (they are

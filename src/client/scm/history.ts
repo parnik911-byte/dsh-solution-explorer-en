@@ -25,7 +25,7 @@ export interface HistoryDeps {
 export async function getCommitDetail(hash: string, { state }: HistoryDeps) {
   if (state.commits.commitDetailCache.has(hash)) return state.commits.commitDetailCache.get(hash);
   const result = await (await fetch(`/solution-explorer/git-commit-detail?root=${encodeURIComponent(gitRoot(state))}&hash=${encodeURIComponent(hash)}`)).json();
-  if (!result.ok || !result.value) throw new Error(result.error?.message || "加载失败");
+  if (!result.ok || !result.value) throw new Error(result.error?.message || "Failed to load");
   state.commits.commitDetailCache.set(hash, result.value);
   return result.value;
 }
@@ -44,16 +44,14 @@ export async function githubCommitUrl(hash: string, { state, loadRemotes }: Hist
 
 /** Project one commit payload into the tooltip's display data. */
 function commitTooltipData(c: any, link: string): CommitTooltipData {
-  const zh = document.documentElement.lang?.startsWith("zh");
+
   const body = (c.body || c.message || "").trim();
   const s = c.stats || { files: 0, insertions: 0, deletions: 0 };
   let statsText = "";
   if (c.files && c.files.length) {
-    statsText = zh
-      ? `已更改 ${s.files} 个文件`
-      : `${s.files} file${s.files === 1 ? "" : "s"} changed`;
-    if (s.insertions) statsText += zh ? `，${s.insertions} 行插入(+)` : `, ${s.insertions} insertion${s.insertions === 1 ? "" : "s"}(+)`;
-    if (s.deletions) statsText += zh ? `，${s.deletions} 行删除(-)` : `, ${s.deletions} deletion${s.deletions === 1 ? "" : "s"}(-)`;
+    statsText = `${s.files} file${s.files === 1 ? "" : "s"} changed`;
+    if (s.insertions) statsText += `, ${s.insertions} insertion${s.insertions === 1 ? "" : "s"}(+)`;
+    if (s.deletions) statsText += `, ${s.deletions} deletion${s.deletions === 1 ? "" : "s"}(-)`;
   }
   const date = new Date(c.timestamp).toLocaleString();
   return {
@@ -68,12 +66,12 @@ function commitTooltipData(c: any, link: string): CommitTooltipData {
 /** Render the tooltip card through its React root. */
 function renderCommitTooltip(deps: HistoryDeps, data: CommitTooltipData | null, loading: boolean): void {
   const { state } = deps;
-  const zh = document.documentElement.lang?.startsWith("zh") === true;
+
   state.commits.commitTipRoot?.render(h(CommitTooltip, {
     loading,
     data,
     loadingText: t("loading"),
-    linkText: zh ? "在 GitHub 上打开" : "Open on GitHub",
+    linkText: "Open on GitHub",
   }));
 }
 

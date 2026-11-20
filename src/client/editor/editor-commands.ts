@@ -319,10 +319,10 @@ export function registerEditorCommands(deps: EditorCommandsDeps): () => void {
           content: tab.content
         })
       })).json();
-      if (!result.ok) showToast("保存失败: " + (result.error?.message || ""), true);
+      if (!result.ok) showToast("Save failed: " + (result.error?.message || ""), true);
       else { ok = true; await deps.loadGitStatus?.(deps.actionsDeps); await loadTree({ state, render }); }
     } catch (err) {
-      showToast("保存失败: " + (err.message || String(err)), true);
+      showToast("Save failed: " + (err.message || String(err)), true);
     }
     tab.saving = false;
     if (ok) tab.dirty = false;

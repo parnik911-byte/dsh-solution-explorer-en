@@ -66,7 +66,7 @@ const FN_TARGETS = [
   'mountColumn', 'waitForFrame', 'handleSessionChange',
 ]
 const CONST_TARGETS = [
-  'gitRoot', 'termLang', 'terminalCwd', 'terminalCellSize', 'terminalShellName',
+  'gitRoot', 'terminalCwd', 'terminalCellSize', 'terminalShellName',
   'showTerminalError', 'ensureTerminalShell', 'renderTerminalTabs',
   'activateTerminalTab', 'fitTerminal', 'scheduleTerminalReboot',
   'flushTerminalInput', 'queueTerminalInput', 'flushTerminalOutput',

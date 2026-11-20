@@ -6,7 +6,7 @@ import type { ClientContext } from "@deepseek-ai/dsh-client-runtime/client"
 import { commands } from "./commands.ts"
 
 
-import { setLanguage } from "./locales.ts"
+
 
 
 import { mainViewSessionId } from "./shared/session.ts"
@@ -160,7 +160,7 @@ export function mountPanel(ctx: ClientContext): void {
 
 					if (!state.activeEl) return;
 
-					setLanguage(document.documentElement.lang?.startsWith("zh") ? "zh" : "en");
+					
 
 					// The whole panel renders through the React root now.
 					renderReact();
