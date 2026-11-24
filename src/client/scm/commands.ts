@@ -126,8 +126,10 @@ export function registerScmCommands(deps: ScmCommandsDeps): () => void {
     }
   };
   commands.remotePanel = async () => { state.scm.remotePanelOpen = !state.scm.remotePanelOpen; if (state.scm.remotePanelOpen) await deps.loadRemotes(deps.branchesDeps); render(); };
-  commands.remoteName = (v) => { state.scm.remoteName = v; };
-  commands.remoteUrl = (v) => { state.scm.remoteUrl = v; };
+  // Single-line controlled inputs: they must re-render on every
+  // keystroke, otherwise React restores (wipes) the typed character.
+  commands.remoteName = (v) => { state.scm.remoteName = v; render(); };
+  commands.remoteUrl = (v) => { state.scm.remoteUrl = v; render(); };
   commands.remoteAdd = async () => {
     if (!state.scm.remoteName.trim() || !state.scm.remoteUrl.trim()) return;
     const result = await (await fetch("/solution-explorer/git-remote-add", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ root: gitRoot(state), name: state.scm.remoteName.trim(), url: state.scm.remoteUrl.trim() }) })).json();
@@ -146,8 +148,8 @@ export function registerScmCommands(deps: ScmCommandsDeps): () => void {
     if (!result.ok) showToast(result.error?.message || "Failed to update URL", true); else await deps.loadRemotes(deps.branchesDeps);
   };
   commands.branchPanel = async () => { state.scm.branchPanelOpen = !state.scm.branchPanelOpen; if (state.scm.branchPanelOpen) { await deps.loadBranches(deps.branchesDeps); await deps.loadTags(deps.branchesDeps); } render(); };
-  commands.branchName = (v) => { state.scm.branchName = v; };
-  commands.branchFrom = (v) => { state.scm.branchFrom = v; };
+  commands.branchName = (v) => { state.scm.branchName = v; render(); };
+  commands.branchFrom = (v) => { state.scm.branchFrom = v; render(); };
   commands.branchCreate = async () => {
     if (!state.scm.branchName.trim()) return;
     const body: { root: string; name: string; from?: string } = { root: gitRoot(state), name: state.scm.branchName.trim() };
@@ -211,10 +213,20 @@ export function registerScmCommands(deps: ScmCommandsDeps): () => void {
     deps.loadRecentCommits(deps.historyDeps);
   };
 
+  // The commit textarea is uncontrolled (see ScmPanel): after a
+  // programmatic change (AI draft, clear after commit) the state no
+  // longer matches the DOM node, so push it back imperatively.
+  const syncCommitBox = () => {
+    document.querySelectorAll(".sol-exp-commit-box .sol-exp-commit-input").forEach((el) => {
+      const ta = el as HTMLTextAreaElement;
+      if (ta.value !== state.scm.commitMessage) ta.value = state.scm.commitMessage;
+    });
+  };
+
   commands.commitMsg = (msg) => {
     state.scm.commitMessage = msg;
-    // Toggle the commit button in place: a full render() resets the
-    // async-loaded commit history and the textarea caret on every keystroke.
+    // Toggle the commit button in place: a full render() on every
+    // keystroke is wasteful and disturbs the async-loaded history.
     document.querySelectorAll(".sol-exp-commit-btn").forEach((btn) => {
       if (state.scm.committing || !state.scm.commitMessage.trim()) btn.setAttribute("disabled", "disabled");
       else btn.removeAttribute("disabled");
@@ -237,6 +249,7 @@ export function registerScmCommands(deps: ScmCommandsDeps): () => void {
       }
       state.scm.commitMessage = result.value;
       render();
+      syncCommitBox();
       // Re-enable the commit button after filling the message in place.
       document.querySelectorAll(".sol-exp-commit-btn").forEach((btn) => {
         if (state.scm.committing || !state.scm.commitMessage.trim()) btn.setAttribute("disabled", "disabled");

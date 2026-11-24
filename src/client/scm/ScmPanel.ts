@@ -179,8 +179,13 @@ export function ScmPanel({ scm, commits, root, actions }: ScmPanelProps): ReactN
       h('textarea', {
         className: 'sol-exp-commit-input',
         placeholder: t('scm.commit.placeholder') + (status?.branch && status.branch !== 'unknown' ? ' (' + status.branch + ')' : ''),
-        value: scm.commitMessage,
-        onChange: (e) => actions.commitMsg(e.target.value),
+        // Uncontrolled on purpose: a controlled `value` without a render
+        // per keystroke makes React restore (wipe) every typed character,
+        // and a render per keystroke resets the caret. `commitMsg` syncs
+        // state on input; programmatic changes (AI draft, clear after
+        // commit) are pushed into the DOM via syncCommitBox().
+        defaultValue: scm.commitMessage,
+        onInput: (e) => actions.commitMsg(e.target.value),
       }),
       h('div', { className: 'sol-exp-commit-row' },
         h('button', {

@@ -232,13 +232,19 @@ export function createTerminalController({ state, render }: TerminalDeps): Termi
       }
       state.terminal.termInputInFlight.set(id, true);
       (async () => {
+        // Timeout: a hung input fetch would otherwise keep the in-flight
+        // gate closed forever and swallow every further keystroke.
+        const ctrl = new AbortController();
+        const timeout = setTimeout(() => ctrl.abort(), 8000);
         try {
           await fetch("/solution-explorer/terminal/" + id + "/input", {
             method: "POST",
             headers: { "content-type": "application/json" },
             body: JSON.stringify({ data }),
+            signal: ctrl.signal,
           });
         } catch { /* keep typing */ }
+        clearTimeout(timeout);
         state.terminal.termInputInFlight.set(id, false);
         const tail = state.terminal.termInputTail.get(id);
         state.terminal.termInputTail.set(id, "");

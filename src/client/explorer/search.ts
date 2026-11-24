@@ -58,6 +58,18 @@ export function registerSearchCommands(deps: { state: AppState; render: () => vo
   };
 
   commands.search = (query) => {
+    // Controlled input: the query must land in React props synchronously,
+    // otherwise React restores (wipes) the typed character. Only the
+    // network fetch stays debounced.
+    state.search.searchQuery = query;
+    if (!query.trim()) {
+      state.search.searching = false;
+      state.search.searchResults = [];
+      render();
+      return;
+    }
+    state.search.searching = true;
+    render();
     if (state.search.searchTimer) clearTimeout(state.search.searchTimer);
     state.search.searchTimer = setTimeout(() => searchFiles(query, deps), 300);
   };

@@ -164,6 +164,14 @@ export async function doCommit(deps: ActionsDeps) {
       await loadGitStatus(deps);
       await loadTree(deps);
     } else showToast(t("scm.commitFailed") + ": " + (result.error?.message || ""), true);
+    // The commit textarea is uncontrolled (see ScmPanel): push the
+    // cleared message back into the DOM node, or it keeps the old text.
+    if (result.ok) {
+      document.querySelectorAll(".sol-exp-commit-box .sol-exp-commit-input").forEach((el) => {
+        const ta = el as HTMLTextAreaElement;
+        if (ta.value !== state.scm.commitMessage) ta.value = state.scm.commitMessage;
+      });
+    }
   } catch (err) {
     showToast(t("scm.commitFailed") + ": " + err.message, true);
   }

@@ -43,7 +43,15 @@ export function createTerminalRoutes(state: TerminalState, sessions: TerminalSes
       const session = state.terminals.get(id)
       if (!session) { json(res, { ok: false, error: { message: 'terminal not found' } }, 404); return }
       const data = typeof payload.data === 'string' ? payload.data : ''
-      await session.handle.write(data)
+      // Always answer: a rejected write left without a response hangs
+      // the client's input fetch, which (via its in-flight gate) then
+      // silently swallows every further keystroke.
+      try {
+        await session.handle.write(data)
+      } catch (err) {
+        json(res, { ok: false, error: { message: err instanceof Error ? err.message : String(err) } })
+        return
+      }
       json(res, { ok: true, value: true })
     },
     reboot: async (res, id, payload) => {
