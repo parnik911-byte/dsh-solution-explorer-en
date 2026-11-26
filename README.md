@@ -4,9 +4,6 @@
 
 **A drop-in replacement for the DSH Web GUI's right sidebar** — VS Code-style file explorer, a multi-tab editor with in-place previews, and full source control.
 
-[![npm](https://img.shields.io/npm/v/dsh-solution-explorer)](https://www.npmjs.com/package/dsh-solution-explorer)
-[![npm downloads](https://img.shields.io/npm/dm/dsh-solution-explorer)](https://www.npmjs.com/package/dsh-solution-explorer)
-[![Awesome DSH Plugin](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com)
 [![license](https://img.shields.io/github/license/parnik911-byte/dsh-solution-explorer-en)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/parnik911-byte/dsh-solution-explorer-en)](https://github.com/parnik911-byte/dsh-solution-explorer-en)
 
