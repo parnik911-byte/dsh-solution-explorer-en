@@ -7,18 +7,17 @@
  * like this panel. Pages are painted into canvases in a scrollport of ours, and
  * the toolbar's zoom controls and drag-to-pan behave as they do for an image.
  *
- * The engine and its resources travel inside this bundle. The worker is started
- * from a Blob URL built from inlined source — no file to serve, no route whose
- * effect would wait for a host restart — and its standard fonts and CMaps are
- * inlined too, so a document needs no network.
+ * The engine travels OUTSIDE the always-loaded client bundle (~4 MB of
+ * PDF.js + worker + fonts): the host serves pdf.min.mjs, pdf.worker.min.mjs
+ * and the font/CMap tables under /solution-explorer/pdfjs/*
+ * (see src/host/routes/pdfjs.ts). This component fetches them on the first
+ * PDF open only, imports the engine from a blob URL, and starts the worker
+ * from a blob URL too — so a session that never opens a PDF never pays for
+ * the engine.
  * @module dsh-solution-explorer/client/editor/PdfPreview
  */
 
 import { createElement as h, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-
-import { getDocument, PDFWorker, type PDFDocumentProxy } from "pdfjs-dist";
-
-import { PDF_ASSETS, PDF_WORKER_SOURCE } from "../generated/pdfjs-assets.ts";
 
 import { t } from "../locales.ts";
 
@@ -28,46 +27,83 @@ const WORKER_READY = "dsh-solution-explorer-pdf-worker-ready";
 /** Cap on the device pixel ratio used when painting a page. */
 const MAX_PIXEL_RATIO = 2;
 
-/** What PDF.js asks the injected factory for, by resource kind. */
-type AssetRequest = { readonly kind: string; readonly filename: string };
+/** Minimal structural view of the lazily loaded PDF.js module. */
+interface PdfModule {
+  getDocument: (opts: any) => any;
+  PDFWorker: { create: (opts: any) => any };
+}
+
+/** Engine module promise, shared across tabs: fetched and imported once. */
+let pdfModulePromise: Promise<PdfModule> | null = null;
+
+/** Worker source text, shared across tabs. */
+let workerSourcePromise: Promise<string> | null = null;
+
+function fetchText(url: string): Promise<string> {
+  return fetch(url).then((response) => {
+    if (!response.ok) throw new Error("HTTP " + response.status + " for " + url);
+    return response.text();
+  });
+}
+
+function loadPdfModule(): Promise<PdfModule> {
+  if (pdfModulePromise === null) {
+    pdfModulePromise = (async (): Promise<PdfModule> => {
+      const source = await fetchText("/solution-explorer/pdfjs/lib");
+      const url = URL.createObjectURL(new Blob([source], { type: "text/javascript" }));
+      try {
+        const mod = await import(url);
+        return mod as PdfModule;
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    })();
+  }
+  return pdfModulePromise;
+}
+
+function loadWorkerSource(): Promise<string> {
+  if (workerSourcePromise === null) {
+    workerSourcePromise = fetchText("/solution-explorer/pdfjs/worker");
+  }
+  return workerSourcePromise;
+}
 
 /**
- * Serves PDF.js's binary resources from this bundle.
+ * Serves PDF.js's binary resources from this plugin's host, one fetch per
+ * resource (the browser caches them afterwards).
  *
  * A missing resource is an error rather than a silent fallback: a document that
  * renders without its CMaps shows the wrong glyphs, which is worse than a
  * preview that says it could not be prepared.
  */
-class InlinedBinaryData {
-  /**
-   * Read one resource.
-   * @param request - the resource kind and file name PDF.js asked for.
-   * @returns its bytes.
-   */
-  async fetch({ kind, filename }: AssetRequest): Promise<Uint8Array> {
-    const encoded = PDF_ASSETS[kind]?.[filename];
-    if (encoded === undefined) throw new Error("missing PDF resource " + kind + "/" + filename);
-    const binary = atob(encoded);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-    return bytes;
+class HostBinaryData {
+  async fetch({ kind, filename }: { readonly kind: string; readonly filename: string }): Promise<Uint8Array> {
+    const url = new URL("/solution-explorer/pdfjs/asset", window.location.origin);
+    url.searchParams.set("kind", kind);
+    url.searchParams.set("file", filename);
+    const response = await fetch(url.href);
+    if (!response.ok) throw new Error("missing PDF resource " + kind + "/" + filename);
+    return new Uint8Array(await response.arrayBuffer());
   }
 }
 
 /** One open document plus everything that must be released with it. */
 interface Session {
-  readonly document: PDFDocumentProxy;
+  readonly document: any;
   readonly dispose: () => Promise<void>;
 }
 
 /**
  * Open a PDF in a worker this component owns.
+ * @param lib - the lazily loaded PDF.js module.
  * @param data - the complete bytes of the file.
  * @returns the open document and its disposer.
  */
-async function openDocument(data: Uint8Array): Promise<Session> {
+async function openDocument(lib: PdfModule, data: Uint8Array): Promise<Session> {
+  const workerSource = await loadWorkerSource();
   const url = URL.createObjectURL(new Blob([
-    PDF_WORKER_SOURCE,
+    workerSource,
     "\nself.postMessage({type:" + JSON.stringify(WORKER_READY) + "});\n",
   ], { type: "text/javascript" }));
   const worker = new Worker(url, { type: "module", name: "dsh-solution-explorer-pdf" });
@@ -80,13 +116,13 @@ async function openDocument(data: Uint8Array): Promise<Session> {
     worker.addEventListener("messageerror", () => { reject(new Error("PDF worker message failed")); });
   });
   await ready;
-  let loading: ReturnType<typeof getDocument> | null = null;
+  let loading: any = null;
   try {
-    const bridge = PDFWorker.create({ port: worker });
-    loading = getDocument({
+    const bridge = lib.PDFWorker.create({ port: worker });
+    loading = lib.getDocument({
       data,
       worker: bridge,
-      BinaryDataFactory: InlinedBinaryData as unknown as new () => object,
+      BinaryDataFactory: HostBinaryData as unknown as new () => object,
       cMapPacked: true,
       useWorkerFetch: false,
       enableXfa: false,
@@ -95,9 +131,11 @@ async function openDocument(data: Uint8Array): Promise<Session> {
     const opened = loading;
     return {
       document,
-      // The loading task owns the document and the worker it borrowed.
+      // The loading task owns the document; the worker we own is stopped
+      // too (destroying the document does not kill the thread).
       dispose: async () => {
         await opened.destroy();
+        worker.terminate();
         URL.revokeObjectURL(url);
       },
     };
@@ -143,11 +181,14 @@ export function PdfPreview({ root, path, zoom, onZoom }: {
     painted.current.clear();
     void (async () => {
       try {
-        const response = await fetch("/solution-explorer/raw?root=" + encodeURIComponent(root) + "&file=" + encodeURIComponent(path));
+        const [lib, response] = await Promise.all([
+          loadPdfModule(),
+          fetch("/solution-explorer/raw?root=" + encodeURIComponent(root) + "&file=" + encodeURIComponent(path)),
+        ]);
         if (!response.ok) throw new Error("HTTP " + response.status);
         const bytes = new Uint8Array(await response.arrayBuffer());
         if (bytes.length === 0) throw new Error("empty file");
-        opened = await openDocument(bytes);
+        opened = await openDocument(lib, bytes);
         if (cancelled) { await opened.dispose(); return; }
         setPageCount(opened.document.numPages);
         setSession(opened);

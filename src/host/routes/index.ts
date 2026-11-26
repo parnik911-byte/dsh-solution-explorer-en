@@ -4,6 +4,7 @@ import { gitWritePost } from './git-write.ts'
 import { gitSyncPost } from './git-sync.ts'
 import { branchRemotePost } from './branch-remote.ts'
 import { llmGet, llmPost } from './llm.ts'
+import { pdfjsGet } from './pdfjs.ts'
 import type { Handler } from './context.ts'
 
 /** Exact-path route tables, keyed by pathname, split by HTTP method.
@@ -13,6 +14,7 @@ export const getRoutes: Record<string, Handler> = {
   ...fsGet,
   ...gitReadGet,
   ...llmGet,
+  ...pdfjsGet,
 }
 
 export const postRoutes: Record<string, Handler> = {

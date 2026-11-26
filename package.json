@@ -106,6 +106,7 @@
     "lib/index.js",
     "lib/client.js",
     "lib/types/**/*.d.ts",
+    "pdfjs/**",
     "cordis.patch.yml"
   ],
   "license": "MIT",

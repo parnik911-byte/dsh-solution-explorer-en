@@ -6,7 +6,7 @@
  * @deepseek-ai/dsh-client-ui-primitives icon.
  * @module dsh-solution-explorer/client/explorer/TreePanel
  */
-import { createElement as h, Fragment } from 'react'
+import { createElement as h, Fragment, memo } from 'react'
 import type { ReactNode } from 'react'
 import {
   FileTypeIcon,
@@ -92,19 +92,19 @@ function CreateRow({ type, depth, actions }: {
   )
 }
 
-/** One row plus its expanded children. */
-function TreeNode({ node, depth, tree, clipboard, actions }: {
+/** One tree row (no children). Memoized on primitive visual props so a
+ * selection or poll in one branch does not re-render thousands of rows. */
+const TreeRow = memo(function TreeRow({ node, depth, isExpanded, isSelected, isCut, isDropTarget, renamingPath, actions }: {
   node: TreeNodeData
   depth: number
-  tree: TreeState
-  clipboard: ClipboardState
+  isExpanded: boolean
+  isSelected: boolean
+  isCut: boolean
+  isDropTarget: boolean
+  renamingPath: string
   actions: TreeActions
 }): ReactNode {
   const isDir = node.type === 'directory'
-  const isExpanded = tree.expandedPaths.has(node.path)
-  const isSelected = tree.selectedPaths.has(node.path)
-  const isCut = clipboard.clipboard?.mode === 'cut' && clipboard.clipboard.paths.includes(node.path)
-  const isDropTarget = isDir && clipboard.dropTargetPath === node.path && clipboard.dragPaths.length > 0
 
   const rowClass = [
     'sol-exp-tree-node',
@@ -119,8 +119,7 @@ function TreeNode({ node, depth, tree, clipboard, actions }: {
     ? h(isExpanded ? IconFolderOpen : IconFolderClose, { size: 16 })
     : h(FileTypeIcon, { path: node.path, size: 16 })
 
-  return h('div', { className: 'sol-exp-tree-node-wrapper' },
-    h('div', {
+  return h('div', {
       className: rowClass,
       style: { paddingLeft: 12 + depth * 16 },
       draggable: true,
@@ -144,7 +143,7 @@ function TreeNode({ node, depth, tree, clipboard, actions }: {
         : undefined,
     },
       h('span', { className: 'sol-exp-file-icon' }, icon),
-      node.path === tree.renamingPath
+      node.path === renamingPath
         ? h('input', {
             className: 'sol-exp-rename-input',
             defaultValue: node.name,
@@ -158,7 +157,30 @@ function TreeNode({ node, depth, tree, clipboard, actions }: {
           })
         : h('span', { className: 'sol-exp-file-name' + (gitCls ? ' sol-exp-git-' + gitCls : '') }, node.name),
       node.gitStatus ? h('span', { className: 'sol-exp-git-letter sol-exp-git-' + gitCls }, node.gitStatus) : null,
-    ),
+  )
+})
+
+/** One row plus its expanded children. Computes the row's visual flags from
+ * the shared tree/clipboard state and delegates the row itself to the
+ * memoized TreeRow, so unchanged rows bail out of re-rendering. */
+function TreeNode({ node, depth, tree, clipboard, actions }: {
+  node: TreeNodeData
+  depth: number
+  tree: TreeState
+  clipboard: ClipboardState
+  actions: TreeActions
+}): ReactNode {
+  const isDir = node.type === 'directory'
+  const isExpanded = tree.expandedPaths.has(node.path)
+  const isSelected = tree.selectedPaths.has(node.path)
+  const isCut = clipboard.clipboard?.mode === 'cut' && clipboard.clipboard.paths.includes(node.path)
+  const isDropTarget = isDir && clipboard.dropTargetPath === node.path && clipboard.dragPaths.length > 0
+
+  return h('div', { className: 'sol-exp-tree-node-wrapper' },
+    h(TreeRow, {
+      node, depth, isExpanded, isSelected, isCut, isDropTarget,
+      renamingPath: tree.renamingPath, actions,
+    }),
     isDir && isExpanded
       ? h('div', { className: 'sol-exp-tree-children' },
           tree.creating && tree.creating.dir === node.path

@@ -65,21 +65,42 @@ export function langFromPath(path: string): string | undefined {
   return EXT_LANG[name.slice(dot + 1).toLowerCase()]
 }
 
+/**
+ * Bounded memo for full-document highlighting: editor/diff renders repeat
+ * with the same content far more often than the content changes, and hljs
+ * on a whole file is the expensive part. Keyed by language + full text
+ * (diffs highlight row-by-row, so many distinct entries are needed),
+ * cleared wholesale when it grows too large.
+ */
+const wholeCache = new Map<string, string>()
+const WHOLE_CACHE_MAX = 256
+
 /** Highlight code to a single HTML string (for the editor overlay). */
 export function highlightToHtml(code: string, lang: string | undefined): string | undefined {
   if (!lang) return undefined
+  const key = lang + '\0' + code
+  const hit = wholeCache.get(key)
+  if (hit !== undefined) return hit
   try {
-    return hljs.highlight(code, { language: lang }).value
+    const html = hljs.highlight(code, { language: lang }).value
+    if (wholeCache.size >= WHOLE_CACHE_MAX) wholeCache.clear()
+    wholeCache.set(key, html)
+    return html
   } catch {
     return undefined
   }
 }
 
+let lastLines = { code: '', lang: '', html: [] as string[] }
+
 /** Highlight each line independently to HTML (for the diff left column rows). */
 export function highlightLinesHtml(code: string, lang: string | undefined): string[] | undefined {
   if (!lang) return undefined
+  if (lastLines.code === code && lastLines.lang === lang) return lastLines.html
   try {
-    return code.split('\n').map(line => hljs.highlight(line, { language: lang }).value)
+    const html = code.split('\n').map(line => hljs.highlight(line, { language: lang }).value)
+    lastLines = { code, lang, html }
+    return html
   } catch {
     return undefined
   }

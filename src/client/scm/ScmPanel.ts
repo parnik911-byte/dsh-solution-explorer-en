@@ -11,7 +11,7 @@
  * migrates in the commits-graph block.
  * @module dsh-solution-explorer/client/scm/ScmPanel
  */
-import { createElement as h, Fragment } from 'react'
+import { createElement as h, Fragment, memo } from 'react'
 import type { ReactNode } from 'react'
 import {
   IconRefreshOutline,
@@ -105,7 +105,7 @@ function Section(props: {
   )
 }
 
-function ScmItem({ item, section, actions }: { item: ScmChange; section: string; actions: ScmActions }): ReactNode {
+const ScmItem = memo(function ScmItem({ item, section, actions }: { item: ScmChange; section: string; actions: ScmActions }): ReactNode {
   const staged = section === 'staged'
   const isDir = item.path.endsWith('/') || item.path.endsWith('\\')
   const open = () => {
@@ -136,7 +136,7 @@ function ScmItem({ item, section, actions }: { item: ScmChange; section: string;
           ),
     ),
   )
-}
+})
 
 /** The SCM panel: split view with the top (sections) and bottom (repository + commits). */
 export function ScmPanel({ scm, commits, root, actions }: ScmPanelProps): ReactNode {

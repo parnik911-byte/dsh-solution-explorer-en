@@ -6,7 +6,7 @@
  * detail cache (no imperative DOM insertion).
  * @module dsh-solution-explorer/client/scm/CommitsList
  */
-import { createElement as h, Fragment } from 'react'
+import { createElement as h, Fragment, memo, useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { FileTypeIcon } from '../icons.ts'
 import { t } from '../locales.ts'
@@ -32,7 +32,7 @@ export interface CommitsListProps {
 }
 
 /** One row's graph column, drawn as React SVG elements. */
-function GraphSvg({ draw }: { draw: GraphRowDraw }): ReactNode {
+const GraphSvg = memo(function GraphSvg({ draw }: { draw: GraphRowDraw }): ReactNode {
   const children: ReactNode[] = []
   draw.transitions.forEach((tr, i) => {
     children.push(h('path', {
@@ -58,7 +58,7 @@ function GraphSvg({ draw }: { draw: GraphRowDraw }): ReactNode {
     })
   })
   return h('svg', { className: 'sol-exp-graph-svg', width: draw.width, height: ROW_H }, children)
-}
+})
 
 /** The expanded file list + checkout action under a selected commit row. */
 function CommitDetailInline({ detail, hash, actions }: {
@@ -103,7 +103,9 @@ export function CommitsList({ commits, actions }: CommitsListProps): ReactNode {
     return h('div', { id: 'sol-exp-commits-list', style: listStyle, onScroll }, t('scm.log.empty'))
   }
 
-  const plans = planGraph(commits.rows)
+  // planGraph is O(rows · lanes) and re-ran on every panel render;
+  // the rows array identity only changes when new commits load.
+  const plans = useMemo(() => planGraph(commits.rows ?? []), [commits.rows])
   return h('div', { id: 'sol-exp-commits-list', style: listStyle, onScroll },
     commits.rows.map((c, i) => {
       const selected = commits.graphDetailOpen === c.hash
