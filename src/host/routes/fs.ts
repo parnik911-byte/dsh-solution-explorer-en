@@ -1,5 +1,6 @@
 import * as fsp from 'node:fs/promises'
 import * as pathModule from 'node:path'
+import { createReadStream } from 'node:fs'
 import { spawn } from 'node:child_process'
 
 import { json, ensureInside, autoRename, movePath, resolveReadTarget } from '../http-util.ts'
@@ -8,6 +9,13 @@ import { getGitStatus, annotateGitStatus } from '../status.ts'
 import { normPath } from '../paths.ts'
 import { Config } from '../config.ts'
 import type { Handler } from './context.ts'
+
+/** Text files larger than this are reported as tooLarge instead of loaded whole. */
+const READ_TEXT_MAX_BYTES = 10 * 1024 * 1024
+/** Raw bytes (images, PDFs) served by /raw; larger files are refused. */
+const RAW_MAX_BYTES = 100 * 1024 * 1024
+/** /write content ceiling (editor saves; upload has its own 50 MB cap). */
+const WRITE_MAX_CHARS = 50 * 1024 * 1024
 
 export const fsGet: Record<string, Handler> = {
   '/solution-explorer/tree': async ({ res, query, getConfig }) => {
@@ -66,6 +74,11 @@ export const fsGet: Record<string, Handler> = {
         json(res, { ok: true, value: { content: '', mtime: stat.mtimeMs, size: stat.size, supported: true, image: true, mime: imageMime(imageExt) } })
         return
       }
+      // Refuse to slurp a huge text file into memory + JSON in one go.
+      if (stat.size > READ_TEXT_MAX_BYTES) {
+        json(res, { ok: true, value: { content: '', mtime: stat.mtimeMs, size: stat.size, supported: false, tooLarge: true } })
+        return
+      }
       // Binary detection: a NUL byte in the head chunk marks a file the
       // text editor cannot display (exe, dll, archives, ...).
       const fh = await fsp.open(fullPath, 'r')
@@ -96,9 +109,18 @@ export const fsGet: Record<string, Handler> = {
       const fullPath = resolveReadTarget(root, file)
       if (fullPath === null) { json(res, { ok: false, error: { message: 'path traversal denied' } }); return }
       const ext = pathModule.extname(fullPath).slice(1).toLowerCase()
-      const buf = await fsp.readFile(fullPath)
-      res.writeHead(200, { 'content-type': IMAGE_EXT.has(ext) ? imageMime(ext) : 'application/octet-stream', 'Cache-Control': 'no-store' })
-      res.end(buf)
+      const stat = await fsp.stat(fullPath)
+      if (stat.size > RAW_MAX_BYTES) { json(res, { ok: false, error: { message: 'file too large' } }, 413); return }
+      res.writeHead(200, {
+        'content-type': IMAGE_EXT.has(ext) ? imageMime(ext) : 'application/octet-stream',
+        'content-length': String(stat.size),
+        'Cache-Control': 'no-store',
+      })
+      // Streamed, never buffered whole: an image/PDF must not cost
+      // its full size in host memory.
+      const stream = createReadStream(fullPath)
+      stream.on('error', () => { try { res.destroy() } catch { /* socket gone */ } })
+      stream.pipe(res)
     } catch (err) {
       json(res, { ok: false, error: { message: err instanceof Error ? err.message : String(err) } })
     }
@@ -215,6 +237,7 @@ export const fsPost: Record<string, Handler> = {
     const content = typeof payload.content === 'string' ? payload.content : payload.content as unknown
     if (!root || !target) { json(res, { ok: false, error: { message: 'root and path required' } }); return }
     if (typeof content !== 'string') { json(res, { ok: false, error: { message: 'content must be a string' } }); return }
+    if (content.length > WRITE_MAX_CHARS) { json(res, { ok: false, error: { message: 'file too large' } }, 413); return }
     try {
       // Resolve and clamp the target strictly inside the workspace root.
       const resolvedRoot = pathModule.resolve(root)
@@ -227,7 +250,16 @@ export const fsPost: Record<string, Handler> = {
         json(res, { ok: false, error: { message: 'path traversal denied' } }); return
       }
       await fsp.mkdir(dir, { recursive: true })
-      await fsp.writeFile(fullPath, content, 'utf-8')
+      // Atomic via tmp+rename in the same directory: a crash mid-write
+      // leaves the old file intact instead of a torn one.
+      const tmpPath = fullPath + '.sol-exp-tmp-' + process.pid + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8)
+      try {
+        await fsp.writeFile(tmpPath, content, 'utf-8')
+        await fsp.rename(tmpPath, fullPath)
+      } catch (err) {
+        await fsp.unlink(tmpPath).catch(() => {})
+        throw err
+      }
       json(res, { ok: true, value: { path: target } })
     } catch (err) {
       json(res, { ok: false, error: { message: err instanceof Error ? err.message : String(err) } })

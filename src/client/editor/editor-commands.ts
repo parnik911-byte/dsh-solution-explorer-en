@@ -165,6 +165,9 @@ export function registerEditorCommands(deps: EditorCommandsDeps): () => void {
         if (result.value.image) {
           tab.image = true;
           tab.content = null;
+        } else if (result.value.tooLarge === true) {
+          tab.error = t("editor.tooLarge");
+          tab.content = null;
         } else if (result.value.supported === false) {
           tab.unsupported = true;
           tab.content = null;

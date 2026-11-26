@@ -4,7 +4,7 @@ import * as pathModule from 'node:path'
 import { git } from '../git-runner.ts'
 import { getGitStatus } from '../status.ts'
 import { unquoteGitPath } from '../paths.ts'
-import { json } from '../http-util.ts'
+import { ensureInside, json } from '../http-util.ts'
 import type { Handler } from './context.ts'
 
 export const gitReadGet: Record<string, Handler> = {
@@ -61,7 +61,12 @@ export const gitReadGet: Record<string, Handler> = {
       newContent = idx.ok ? idx.stdout : ''
     } else {
       try {
-        newContent = await fsp.readFile(pathModule.resolve(root, file), 'utf8')
+        // Fenced: without this, `file=../../...` reads arbitrary files.
+        // Outside the root we return no content rather than an error, so
+        // the diff view degrades instead of breaking.
+        if (ensureInside(root, file)) {
+          newContent = await fsp.readFile(pathModule.resolve(root, file), 'utf8')
+        }
       } catch { newContent = '' }
     }
     json(res, { ok: true, value: { diff: result.stdout, oldContent, newContent } })

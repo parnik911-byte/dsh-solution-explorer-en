@@ -7,12 +7,30 @@ export function json(res: ServerResponse, payload: unknown, status = 200): void 
   res.end(JSON.stringify(payload))
 }
 
+/** Hard ceiling for a JSON request body (uploads use ~70 MB of base64). */
+export const REQUEST_BODY_MAX_BYTES = 75 * 1024 * 1024
+
 export async function readJsonBody(req: IncomingMessage): Promise<Record<string, unknown> | null> {
   return new Promise((resolve) => {
-    let body = ''
-    req.on('data', (chunk) => { body += chunk })
+    const chunks: Buffer[] = []
+    let total = 0
+    let overflow = false
+    req.on('data', (chunk) => {
+      if (overflow) return
+      const buf = chunk as Buffer
+      total += buf.length
+      if (total > REQUEST_BODY_MAX_BYTES) {
+        // Reject without accumulating: the sender still drains, we just
+        // stop paying memory for it.
+        overflow = true
+        chunks.length = 0
+        return
+      }
+      chunks.push(buf)
+    })
     req.on('end', () => {
-      try { resolve(JSON.parse(body || '{}')) } catch { resolve(null) }
+      if (overflow) { resolve(null); return }
+      try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf-8') || '{}')) } catch { resolve(null) }
     })
     req.on('error', () => resolve(null))
   })

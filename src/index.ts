@@ -75,8 +75,12 @@ export function apply(ctx: Context, config: Config = {}): void {
 
   ctx.effect(() => {
     const handler = async (req: IncomingMessage, res: ServerResponse): Promise<void> => {
+      // Paranoia net: a route that throws outside its own handling must
+      // still answer (an unanswered response hangs the client's fetch —
+      // terminal input deadlocks on exactly this pattern).
+      const pathname = new URL(req.url ?? '/', 'http://x').pathname
+      try {
       const url = new URL(req.url ?? '/', 'http://x')
-      const pathname = url.pathname
       const query = parseQuery(url)
 
       // Build the per-request route context. The apply-closure dependencies
@@ -158,6 +162,14 @@ export function apply(ctx: Context, config: Config = {}): void {
       }
 
       json(res, { ok: false, error: { message: 'method not allowed' } }, 405)
+      } catch (err) {
+        console.error('[sol-exp] unhandled route error', pathname, err)
+        if (!res.headersSent) {
+          json(res, { ok: false, error: { message: err instanceof Error ? err.message : String(err) } }, 500)
+        } else {
+          try { res.end() } catch { /* socket gone */ }
+        }
+      }
     }
 
     const disposers = [

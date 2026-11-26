@@ -73,6 +73,7 @@ const en = {
   'loading': 'Loading...',
   'error.load': 'Failed to load file tree',
   'error.read': 'Failed to read file',
+  'editor.tooLarge': 'File too large to open (max 10 MB)',
   'context.copyPath': 'Copy path',
   'context.reveal': 'Reveal in file explorer',
   'context.open': 'Open',
