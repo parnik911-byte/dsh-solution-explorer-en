@@ -259,7 +259,9 @@ export function mountPanel(ctx: ClientContext): void {
 
 
 				// ── Commit-row hover tooltip (event delegation) ─────────────
-				document.addEventListener("mouseover", (e) => {
+				// Named handlers: the effect disposer below removes every
+				// one, so a remount never stacks duplicate listeners.
+				const onDocMouseOver = (e) => {
 					const target = e.target;
 					if (!(target instanceof Element)) return;
 					// Hovering the tooltip itself keeps it alive.
@@ -279,15 +281,18 @@ export function mountPanel(ctx: ClientContext): void {
 						return;
 					}
 					scheduleHideCommitTooltip(historyDeps);
-				});
-				document.addEventListener("mouseout", (e) => {
+				};
+				document.addEventListener("mouseover", onDocMouseOver);
+				const onDocMouseOut = (e) => {
 					const target = e.target;
 					if (!(target instanceof Element)) return;
 					const row = target.closest(".sol-exp-commit-item");
 					if (row && !row.contains(e.relatedTarget as Node)) scheduleHideCommitTooltip(historyDeps);
-				});
+				};
+				document.addEventListener("mouseout", onDocMouseOut);
 				// Hide tooltip on any scroll (row position is stale after scroll).
-				document.addEventListener("scroll", () => hideCommitTooltip(historyDeps), true);
+				const onDocScroll = () => hideCommitTooltip(historyDeps);
+				document.addEventListener("scroll", onDocScroll, true);
 
 				const dragGuard = (e) => {
 
@@ -301,7 +306,7 @@ export function mountPanel(ctx: ClientContext): void {
 
 				document.addEventListener("drop", dragGuard);
 
-				document.addEventListener("click", (e) => {
+				const onDocClick = (e) => {
 
 					if (!state.activeEl?.contains(e.target as Node)) return;
 
@@ -321,9 +326,10 @@ export function mountPanel(ctx: ClientContext): void {
 
 					}
 
-				});
+				};
+				document.addEventListener("click", onDocClick);
 
-				document.addEventListener("dragend", () => {
+				const onDocDragEnd = () => {
 
 					if (state.clipboard.dragPaths.length || state.clipboard.dropTargetPath) {
 
@@ -335,7 +341,8 @@ export function mountPanel(ctx: ClientContext): void {
 
 					}
 
-				});
+				};
+				document.addEventListener("dragend", onDocDragEnd);
 
 
 
@@ -647,6 +654,16 @@ export function mountPanel(ctx: ClientContext): void {
 					terminal.dispose();
 
 					state.layout.resizeHandle?.remove();
+
+					document.removeEventListener("mouseover", onDocMouseOver);
+
+					document.removeEventListener("mouseout", onDocMouseOut);
+
+					document.removeEventListener("scroll", onDocScroll, true);
+
+					document.removeEventListener("click", onDocClick);
+
+					document.removeEventListener("dragend", onDocDragEnd);
 
 					document.removeEventListener("dragenter", dragGuard);
 

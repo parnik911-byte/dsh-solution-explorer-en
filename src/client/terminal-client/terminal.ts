@@ -69,6 +69,14 @@ export function createTerminalController({ state, render }: TerminalDeps): Termi
 
   let shellRoot: Root | null = null;
 
+  // Stream supervision state (closure, not store): after the first host
+  // stream opens, the controller keeps itself connected until disposal.
+  let streamDisposed = false;
+  let streamOutdated = false;
+  let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  let reconnectAttempts = 0;
+  let streamWatchdog: ReturnType<typeof setTimeout> | null = null;
+
   /** Render the shell chrome (React) for the current tab set. */
   const renderShell = () => {
     if (shellRoot === null) return;
@@ -274,28 +282,59 @@ export function createTerminalController({ state, render }: TerminalDeps): Termi
     if (state.terminal.termOutputFlush === null) state.terminal.termOutputFlush = requestAnimationFrame(flushTerminalOutput);
   };
 
+  const scheduleStreamReconnect = (delayMs: number) => {
+    if (streamDisposed || streamOutdated || reconnectTimer !== null) return;
+    reconnectTimer = setTimeout(() => {
+      reconnectTimer = null;
+      state.terminal.terminalStreamOn = false;
+      ensureTerminalStream();
+    }, delayMs);
+  };
+
   const ensureTerminalStream = () => {
-    if (state.terminal.terminalStreamOn) return;
+    if (state.terminal.terminalStreamOn || streamDisposed || streamOutdated || reconnectTimer !== null) return;
     state.terminal.terminalStreamOn = true;
     state.terminal.terminalStreamCtrl = new AbortController();
     (async () => {
+      let sawData = false;
       try {
         const resp = await fetch("/solution-explorer/terminal/stream", { signal: state.terminal.terminalStreamCtrl.signal });
         if (!resp.ok || !resp.body) {
           state.terminal.terminalStreamOn = false;
-          // A 404 means the HOST is still running an older
-          // build (the shared stream route is new) — a page
-          // refresh cannot fix that; the app process must
-          // fully restart.
-          showToast("Host is outdated — fully restart DSH to enable terminal output");
+          if (resp.status === 404) {
+            // A 404 means the HOST is still running an older
+            // build (the shared stream route is new) — a page
+            // refresh cannot fix that; the app process must
+            // fully restart.
+            streamOutdated = true;
+            showToast("Host is outdated — fully restart DSH to enable terminal output");
+            return;
+          }
+          // 409 (old stream still closing) and anything else transient:
+          // retry with backoff instead of giving up on output.
+          reconnectAttempts += 1;
+          scheduleStreamReconnect(Math.min(1000 * reconnectAttempts, 10000));
           return;
         }
+        sawData = true;
+        reconnectAttempts = 0;
         const reader = resp.body.getReader();
         const decoder = new TextDecoder();
         let buf = "";
+        // Half-open watchdog: if a proxy kills the connection without a
+        // close (no data, no FIN), read() would hang forever — abort so
+        // the reconnect path below fires instead.
+        const armWatchdog = () => {
+          if (streamWatchdog !== null) clearTimeout(streamWatchdog);
+          streamWatchdog = setTimeout(() => {
+            try { state.terminal.terminalStreamCtrl?.abort(); } catch { /* ignore */ }
+          }, 90000);
+        };
+        armWatchdog();
         while (state.terminal.terminalStreamOn) {
           const { done, value } = await reader.read();
           if (done) break;
+          armWatchdog();
           buf += decoder.decode(value, { stream: true });
           let idx;
           let frameCount = 0;
@@ -341,11 +380,23 @@ export function createTerminalController({ state, render }: TerminalDeps): Termi
           }
         }
       } catch { /* aborted or dropped */ }
+      if (streamWatchdog !== null) { clearTimeout(streamWatchdog); streamWatchdog = null; }
       state.terminal.terminalStreamOn = false;
+      // A live stream that ends (server close, proxy drop, watchdog
+      // abort) is a transient failure: reconnect with backoff so the
+      // tabs keep their output. Disposal and the outdated-host case
+      // are the only ones that stay down.
+      if (!streamDisposed && !streamOutdated && sawData) {
+        reconnectAttempts += 1;
+        scheduleStreamReconnect(Math.min(1000 * reconnectAttempts, 10000));
+      }
     })();
   };
 
   const stopTerminalStream = () => {
+    streamDisposed = true;
+    if (reconnectTimer !== null) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+    if (streamWatchdog !== null) { clearTimeout(streamWatchdog); streamWatchdog = null; }
     state.terminal.terminalStreamOn = false;
     if (state.terminal.terminalStreamCtrl !== null) { try { state.terminal.terminalStreamCtrl.abort(); } catch { /* ignore */ } state.terminal.terminalStreamCtrl = null; }
   };
