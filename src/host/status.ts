@@ -1,4 +1,4 @@
-import { git, isGitRepo } from './git-runner.ts'
+import { git } from './git-runner.ts'
 import { normPath, unquoteGitPath } from './paths.ts'
 import type { FileTreeNode } from './tree.ts'
 
@@ -24,19 +24,58 @@ export type GitEnvelope =
   | { ok: true; value: GitStatusData }
   | { ok: false; error: { message: string } }
 
-/** Get the structured git status of a repo. */
-export function getGitStatus(root: string): GitEnvelope {
-  if (!isGitRepo(root)) {
-    return { ok: true, value: { staged: [], unstaged: [], untracked: [], conflicts: [], ignored: [], ahead: 0, behind: 0, branch: 'unknown', head: '' } }
+const NOT_A_REPO: GitStatusData = { staged: [], unstaged: [], untracked: [], conflicts: [], ignored: [], ahead: 0, behind: 0, branch: 'unknown', head: '' }
+
+/**
+ * Freshness window for one repo's status. The panel polls every few seconds
+ * and every action re-reads the status, so a short TTL coalesces that churn
+ * into one git run instead of 5-6 processes per call; mutations invalidate
+ * explicitly (see invalidateGitStatusCache).
+ */
+const STATUS_CACHE_TTL_MS = 2000
+
+interface StatusCacheEntry {
+  at: number
+  value: GitEnvelope
+}
+
+const statusCache = new Map<string, StatusCacheEntry>()
+const statusInflight = new Map<string, Promise<GitEnvelope>>()
+
+/**
+ * Drop the cached status for one repo (or all repos). Call after any git or
+ * filesystem mutation so the next read is fresh instead of TTL-stale.
+ */
+export function invalidateGitStatusCache(root?: string): void {
+  if (root !== undefined) {
+    statusCache.delete(root)
+    statusInflight.delete(root)
+    return
   }
-  const branchResult = git(['rev-parse', '--abbrev-ref', 'HEAD'], root)
+  statusCache.clear()
+  statusInflight.clear()
+}
+
+async function computeGitStatus(root: string): Promise<GitEnvelope> {
+  if (!(await git(['rev-parse', '--git-dir'], root)).ok) {
+    return { ok: true, value: { ...NOT_A_REPO, staged: [], unstaged: [], untracked: [], conflicts: [], ignored: [] } }
+  }
+  const [branchResult, headResult, aheadBehind, firstStatus] = await Promise.all([
+    git(['rev-parse', '--abbrev-ref', 'HEAD'], root),
+    // Full HEAD hash lets the client detect external commits/checkouts so the
+    // commit history can auto-refresh after a command-line `git commit`.
+    git(['rev-parse', 'HEAD'], root),
+    git(['rev-list', '--left-right', '--count', 'HEAD...@{upstream}'], root),
+    // --ignored=matching lists ignored paths one level deep (an ignored directory
+    // is a single "!! dir/" line, never expanded) so the explorer can grey them.
+    // core.quotePath=false keeps paths with spaces/UTF-8 unquoted — porcelain
+    // v1 otherwise wraps them in C-style quotes and the parsed path breaks
+    // stage/discard for files like "AGENTS copy.md".
+    git(['-c', 'core.quotePath=false', 'status', '--porcelain', '-u', '--ignored=matching'], root),
+  ])
   const branch = branchResult.ok ? branchResult.stdout : 'HEAD'
-  // Full HEAD hash lets the client detect external commits/checkouts so the
-  // commit history can auto-refresh after a command-line `git commit`.
-  const headResult = git(['rev-parse', 'HEAD'], root)
   const head = headResult.ok ? headResult.stdout : ''
 
-  const aheadBehind = git(['rev-list', '--left-right', '--count', 'HEAD...@{upstream}'], root)
   let ahead = 0, behind = 0
   if (aheadBehind.ok) {
     const parts = aheadBehind.stdout.split('\t')
@@ -44,14 +83,9 @@ export function getGitStatus(root: string): GitEnvelope {
     behind = parseInt(parts[1] || '0', 10)
   }
 
-  // --ignored=matching lists ignored paths one level deep (an ignored directory
-  // is a single "!! dir/" line, never expanded) so the explorer can grey them.
-  // core.quotePath=false keeps paths with spaces/UTF-8 unquoted — porcelain
-  // v1 otherwise wraps them in C-style quotes and the parsed path breaks
-  // stage/discard for files like "AGENTS copy.md".
-  let statusResult = git(['-c', 'core.quotePath=false', 'status', '--porcelain', '-u', '--ignored=matching'], root)
+  let statusResult = firstStatus
   if (!statusResult.ok && /ignored|unknown option|usage/i.test(statusResult.error)) {
-    statusResult = git(['-c', 'core.quotePath=false', 'status', '--porcelain', '-u'], root)
+    statusResult = await git(['-c', 'core.quotePath=false', 'status', '--porcelain', '-u'], root)
   }
   const staged: GitChange[] = []
   const unstaged: GitChange[] = []
@@ -92,6 +126,42 @@ export function getGitStatus(root: string): GitEnvelope {
   }
 
   return { ok: true, value: { staged, unstaged, untracked, conflicts, ignored, ahead, behind, branch, head } }
+}
+
+/**
+ * Get the structured git status of a repo (async).
+ *
+ * Results are cached per root for STATUS_CACHE_TTL_MS and concurrent callers
+ * share one in-flight computation. Callers must not mutate the returned
+ * envelope — annotateGitStatus only reads it, and JSON serialization copies.
+ */
+export function getGitStatus(root: string): Promise<GitEnvelope> {
+  const hit = statusCache.get(root)
+  if (hit && Date.now() - hit.at < STATUS_CACHE_TTL_MS) {
+    return Promise.resolve(hit.value)
+  }
+  const pending = statusInflight.get(root)
+  if (pending) {
+    return pending
+  }
+  const task: Promise<GitEnvelope> = computeGitStatus(root).then(
+    (value) => {
+      if (statusInflight.get(root) === task) {
+        statusInflight.delete(root)
+        statusCache.set(root, { at: Date.now(), value })
+      }
+      return value
+    },
+    (err: unknown) => {
+      if (statusInflight.get(root) === task) {
+        statusInflight.delete(root)
+      }
+      const value: GitEnvelope = { ok: false, error: { message: err instanceof Error ? err.message : String(err) } }
+      return value
+    },
+  )
+  statusInflight.set(root, task)
+  return task
 }
 
 /**

@@ -14,7 +14,7 @@ export const gitReadGet: Record<string, Handler> = {
     const results: { path: string; name: string; branch: string }[] = []
     const tryRepo = async (dir: string, name: string) => {
       if (await fsp.stat(pathModule.join(dir, '.git')).catch(() => null) !== null) {
-        const b = git(['rev-parse', '--abbrev-ref', 'HEAD'], dir)
+        const b = await git(['rev-parse', '--abbrev-ref', 'HEAD'], dir)
         results.push({ path: dir, name, branch: b.ok ? b.stdout.trimEnd() : 'HEAD' })
       }
     }
@@ -33,7 +33,7 @@ export const gitReadGet: Record<string, Handler> = {
   '/solution-explorer/git-status': async ({ res, query }) => {
     const root = query.root || ''
     if (!root) { json(res, { ok: false, error: { message: 'root required' } }); return }
-    json(res, getGitStatus(root))
+    json(res, await getGitStatus(root))
   },
   '/solution-explorer/git-diff': async ({ res, query }) => {
     const root = query.root || ''
@@ -43,7 +43,7 @@ export const gitReadGet: Record<string, Handler> = {
     const args = ['diff']
     if (staged) args.push('--cached')
     args.push('--', file)
-    const result = git(args, root)
+    const result = await git(args, root)
     if (!result.ok) { json(res, { ok: false, error: { message: result.error } }); return }
     // Binary diffs ("Binary files a/x and b/x differ") cannot be shown in
     // the text diff view — report unsupported so the UI can say so
@@ -53,11 +53,11 @@ export const gitReadGet: Record<string, Handler> = {
       return
     }
     // Full-file contents for the side-by-side view: old = HEAD, new = index (staged) or working tree.
-    const headShow = git(['show', 'HEAD:' + file], root)
+    const headShow = await git(['show', 'HEAD:' + file], root)
     const oldContent = headShow.ok ? headShow.stdout : ''
     let newContent = ''
     if (staged) {
-      const idx = git(['show', ':0:' + file], root)
+      const idx = await git(['show', ':0:' + file], root)
       newContent = idx.ok ? idx.stdout : ''
     } else {
       try {
@@ -75,7 +75,7 @@ export const gitReadGet: Record<string, Handler> = {
     const logArgs = ['log', `--max-count=${count}`]
     if (skip > 0) logArgs.push(`--skip=${skip}`)
     logArgs.push('--format=%H|%P|%h|%an|%ae|%at|%s')
-    const result = git(logArgs, root)
+    const result = await git(logArgs, root)
     if (!result.ok) { json(res, { ok: false, error: { message: result.error } }); return }
     const commits = result.stdout.split('\n').filter(Boolean).map((line: string) => {
       const parts = line.split('|')
@@ -88,7 +88,7 @@ export const gitReadGet: Record<string, Handler> = {
     })
     // Unpushed (outgoing) commits: HEAD commits not yet on the upstream.
     // Without an upstream, everything is local-only → all unpushed.
-    const upstreamLog = git(['log', '--format=%H', '@{upstream}..HEAD'], root)
+    const upstreamLog = await git(['log', '--format=%H', '@{upstream}..HEAD'], root)
     let unpushedSet: Set<string>
     if (upstreamLog.ok) {
       unpushedSet = new Set(upstreamLog.stdout.split('\n').filter(Boolean))
@@ -101,7 +101,7 @@ export const gitReadGet: Record<string, Handler> = {
   '/solution-explorer/git-remotes': async ({ res, query }) => {
     const root = query.root || ''
     if (!root) { json(res, { ok: false, error: { message: 'root required' } }); return }
-    const result = git(['remote', '-v'], root)
+    const result = await git(['remote', '-v'], root)
     if (!result.ok) { json(res, { ok: false, error: { message: result.error } }); return }
     const remotes = result.stdout.split('\n').filter(Boolean).map((line: string) => {
       const m = line.match(/^(\S+)\s+(\S+)\s+\((\w+)\)$/)
@@ -115,7 +115,7 @@ export const gitReadGet: Record<string, Handler> = {
     // Full refname (refs/heads/* vs refs/remotes/*) so local and remote
     // branches are distinguishable — %(refname:short) collapses both to
     // "name"/"origin/name" and the remote rows were mis-sorted.
-    const result = git(['branch', '-a', '--format=%(HEAD)|%(refname)|%(upstream:short)|%(objectname:short)|%(subject)'], root)
+    const result = await git(['branch', '-a', '--format=%(HEAD)|%(refname)|%(upstream:short)|%(objectname:short)|%(subject)'], root)
     if (!result.ok) { json(res, { ok: false, error: { message: result.error } }); return }
     const branches = result.stdout.split('\n').filter(Boolean).map((line: string) => {
       const parts = line.split('|')
@@ -138,7 +138,7 @@ export const gitReadGet: Record<string, Handler> = {
     const root = query.root || ''
     if (!root) { json(res, { ok: false, error: { message: 'root required' } }); return }
     // Tag name, tag object hash, dereferenced commit hash and commit subject.
-    const result = git(['for-each-ref', 'refs/tags', '--sort=-creatordate', '--format=%(refname:short)|%(objectname:short)|%(*objectname:short)|%(*subject)'], root)
+    const result = await git(['for-each-ref', 'refs/tags', '--sort=-creatordate', '--format=%(refname:short)|%(objectname:short)|%(*objectname:short)|%(*subject)'], root)
     if (!result.ok) { json(res, { ok: false, error: { message: result.error } }); return }
     const tags = result.stdout.split('\n').filter(Boolean).map((line: string) => {
       const parts = line.split('|')
@@ -156,7 +156,7 @@ export const gitReadGet: Record<string, Handler> = {
     // One call carries both the per-file status letters (M/A/D, and
     // rename/copy rows carry "old<TAB>new") and the shortstat summary
     // line for the tooltip ("N files changed, X insertions(+), Y deletions(-)").
-    const result = git(['show', '--name-status', '--shortstat', '--format=%H|%P|%h|%an|%ae|%at|%s', hash], root)
+    const result = await git(['show', '--name-status', '--shortstat', '--format=%H|%P|%h|%an|%ae|%at|%s', hash], root)
     if (!result.ok) { json(res, { ok: false, error: { message: result.error } }); return }
     const lines = result.stdout.split('\n')
     const head = lines[0] || ''
@@ -186,7 +186,7 @@ export const gitReadGet: Record<string, Handler> = {
       }
     }
     // Full message (subject + body) for the hover tooltip.
-    const bodyResult = git(['show', '-s', '--format=%B', hash], root)
+    const bodyResult = await git(['show', '-s', '--format=%B', hash], root)
     json(res, {
       ok: true,
       value: {

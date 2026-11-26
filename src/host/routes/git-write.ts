@@ -3,7 +3,7 @@ import * as os from 'node:os'
 import * as pathModule from 'node:path'
 
 import { git, isGitRepo } from '../git-runner.ts'
-import { getGitStatus } from '../status.ts'
+import { getGitStatus, invalidateGitStatusCache } from '../status.ts'
 import { normPath } from '../paths.ts'
 import { json } from '../http-util.ts'
 import type { Handler } from './context.ts'
@@ -11,19 +11,21 @@ import type { Handler } from './context.ts'
 export const gitWritePost: Record<string, Handler> = {
   '/solution-explorer/git-stage': async ({ res, root, files }) => {
     if (!root || files.length === 0) { json(res, { ok: false, error: { message: 'root and files required' } }); return }
-    const result = git(['add', '--', ...files], root)
+    const result = await git(['add', '--', ...files], root)
+    if (result.ok) invalidateGitStatusCache(root)
     json(res, result.ok ? { ok: true, value: true } : { ok: false, error: { message: result.error } })
   },
   '/solution-explorer/git-unstage': async ({ res, root, files }) => {
     if (!root || files.length === 0) { json(res, { ok: false, error: { message: 'root and files required' } }); return }
-    const result = git(['reset', 'HEAD', '--', ...files], root)
+    const result = await git(['reset', 'HEAD', '--', ...files], root)
+    if (result.ok) invalidateGitStatusCache(root)
     json(res, result.ok ? { ok: true, value: true } : { ok: false, error: { message: result.error } })
   },
   '/solution-explorer/git-discard': async ({ res, root, files }) => {
     if (!root || files.length === 0) { json(res, { ok: false, error: { message: 'root and files required' } }); return }
     // Untracked files cannot be reverted with checkout — remove them
     // (VS Code discard behaviour; the UI confirms destructive actions).
-    const status = getGitStatus(root)
+    const status = await getGitStatus(root)
     const untrackedPaths = new Set(status.ok ? status.value.untracked.map((c) => normPath(c.path)) : [])
     const untracked = files.filter((f) => untrackedPaths.has(normPath(f)))
     const tracked = files.filter((f) => !untrackedPaths.has(normPath(f)))
@@ -41,15 +43,17 @@ export const gitWritePost: Record<string, Handler> = {
       return
     }
     if (tracked.length > 0) {
-      const result = git(['checkout', '--', ...tracked], root)
+      const result = await git(['checkout', '--', ...tracked], root)
       if (!result.ok) { json(res, { ok: false, error: { message: result.error } }); return }
     }
+    invalidateGitStatusCache(root)
     json(res, { ok: true, value: true })
   },
   '/solution-explorer/git-commit': async ({ res, payload, root }) => {
     const message = typeof payload.message === 'string' ? payload.message : ''
     if (!root || !message) { json(res, { ok: false, error: { message: 'root and message required' } }); return }
-    const result = git(['commit', '-m', message], root)
+    const result = await git(['commit', '-m', message], root)
+    if (result.ok) invalidateGitStatusCache(root)
     json(res, result.ok ? { ok: true, value: result.stdout } : { ok: false, error: { message: result.error } })
   },
   '/solution-explorer/git-stage-hunk': async ({ res, payload }) => {
@@ -61,7 +65,7 @@ export const gitWritePost: Record<string, Handler> = {
       json(res, { ok: false, error: { message: 'root, file, oldStart, newStart required' } }); return
     }
     try {
-      const diffResult = git(['diff', '--', file], root)
+      const diffResult = await git(['diff', '--', file], root)
       if (!diffResult.ok) { json(res, { ok: false, error: { message: diffResult.error } }); return }
       const diffLines = diffResult.stdout.split('\n')
       // Split the diff into hunks (@@ headers), keeping the header's own line.
@@ -86,8 +90,9 @@ export const gitWritePost: Record<string, Handler> = {
       const patchFile = pathModule.join(os.tmpdir(), 'sol-exp-hunk-' + Date.now() + '-' + Math.random().toString(36).slice(2) + '.patch')
       await fsp.writeFile(patchFile, patch, 'utf-8')
       try {
-        const applied = git(['apply', '--cached', patchFile], root)
+        const applied = await git(['apply', '--cached', patchFile], root)
         if (!applied.ok) { json(res, { ok: false, error: { message: applied.error } }); return }
+        invalidateGitStatusCache(root)
         json(res, { ok: true, value: { staged: true } })
       } finally {
         await fsp.unlink(patchFile).catch(() => {})
@@ -98,8 +103,9 @@ export const gitWritePost: Record<string, Handler> = {
   },
   '/solution-explorer/git-init': async ({ res, root }) => {
     if (!root) { json(res, { ok: false, error: { message: 'root required' } }); return }
-    if (isGitRepo(root)) { json(res, { ok: false, error: { message: 'Already a git repository' } }); return }
-    const result = git(['init'], root)
+    if (await isGitRepo(root)) { json(res, { ok: false, error: { message: 'Already a git repository' } }); return }
+    const result = await git(['init'], root)
+    if (result.ok) invalidateGitStatusCache(root)
     json(res, result.ok ? { ok: true, value: true } : { ok: false, error: { message: result.error } })
   },
 }

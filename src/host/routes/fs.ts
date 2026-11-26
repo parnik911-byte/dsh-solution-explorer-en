@@ -40,7 +40,7 @@ export const fsGet: Record<string, Handler> = {
       const tree = await buildFileTree(root, '', config.filterPatterns, !!config.showHidden, expandPaths)
       // Annotate each file with its git status letter and each directory
       // with a "modified" marker (VS Code explorer style).
-      const status = getGitStatus(root)
+      const status = await getGitStatus(root)
       if (status.ok) annotateGitStatus(tree, status.value)
       json(res, { ok: true, value: tree })
     } catch (err) {

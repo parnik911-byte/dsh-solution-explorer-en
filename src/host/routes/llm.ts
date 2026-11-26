@@ -137,7 +137,7 @@ export const llmPost: Record<string, Handler> = {
     }
 
     // Staged diff = what will be committed.
-    const diffResult = git(['diff', '--cached'], root)
+    const diffResult = await git(['diff', '--cached'], root)
     const diff = diffResult.ok ? diffResult.stdout : ''
     if (!diff.trim()) {
       json(res, { ok: false, error: { message: 'No staged changes to summarize' } })

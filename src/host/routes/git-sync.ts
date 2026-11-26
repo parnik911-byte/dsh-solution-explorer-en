@@ -1,41 +1,46 @@
 import { git } from '../git-runner.ts'
+import { invalidateGitStatusCache } from '../status.ts'
 import { json } from '../http-util.ts'
 import type { Handler } from './context.ts'
 
 export const gitSyncPost: Record<string, Handler> = {
   '/solution-explorer/git-fetch': async ({ res, root }) => {
     if (!root) { json(res, { ok: false, error: { message: 'root required' } }); return }
-    const result = git(['fetch'], root)
+    const result = await git(['fetch'], root)
+    if (result.ok) invalidateGitStatusCache(root)
     json(res, result.ok ? { ok: true, value: result.stdout } : { ok: false, error: { message: result.error } })
   },
   '/solution-explorer/git-pull': async ({ res, root }) => {
     if (!root) { json(res, { ok: false, error: { message: 'root required' } }); return }
-    const headRef = git(['rev-parse', '--abbrev-ref', 'HEAD'], root)
+    const headRef = await git(['rev-parse', '--abbrev-ref', 'HEAD'], root)
     if (headRef.ok && headRef.stdout === 'HEAD') {
       json(res, { ok: false, error: { message: 'Detached HEAD (not on any branch) — switch to a branch in the branches panel before pulling' } }); return
     }
-    const result = git(['pull'], root)
+    const result = await git(['pull'], root)
+    if (result.ok) invalidateGitStatusCache(root)
     json(res, result.ok ? { ok: true, value: result.stdout } : { ok: false, error: { message: result.error } })
   },
   '/solution-explorer/git-push': async ({ res, root }) => {
     if (!root) { json(res, { ok: false, error: { message: 'root required' } }); return }
-    const headRef = git(['rev-parse', '--abbrev-ref', 'HEAD'], root)
+    const headRef = await git(['rev-parse', '--abbrev-ref', 'HEAD'], root)
     if (headRef.ok && headRef.stdout === 'HEAD') {
       json(res, { ok: false, error: { message: 'Detached HEAD (not on any branch) — switch to a branch in the branches panel before pushing' } }); return
     }
-    const result = git(['push'], root)
+    const result = await git(['push'], root)
+    if (result.ok) invalidateGitStatusCache(root)
     json(res, result.ok ? { ok: true, value: result.stdout } : { ok: false, error: { message: result.error } })
   },
   '/solution-explorer/git-sync': async ({ res, root }) => {
     if (!root) { json(res, { ok: false, error: { message: 'root required' } }); return }
-    const headRef = git(['rev-parse', '--abbrev-ref', 'HEAD'], root)
+    const headRef = await git(['rev-parse', '--abbrev-ref', 'HEAD'], root)
     if (headRef.ok && headRef.stdout === 'HEAD') {
       json(res, { ok: false, error: { message: 'Detached HEAD (not on any branch) — switch to a branch in the branches panel before syncing' } }); return
     }
     // VS Code "Sync Changes": pull first, then push; a failed pull stops.
-    const pull = git(['pull'], root)
+    const pull = await git(['pull'], root)
     if (!pull.ok) { json(res, { ok: false, error: { message: pull.error } }); return }
-    const push = git(['push'], root)
+    const push = await git(['push'], root)
+    if (push.ok) invalidateGitStatusCache(root)
     json(res, push.ok ? { ok: true, value: push.stdout } : { ok: false, error: { message: push.error } })
   },
 }
