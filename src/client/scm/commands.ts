@@ -225,12 +225,15 @@ export function registerScmCommands(deps: ScmCommandsDeps): () => void {
 
   commands.commitMsg = (msg) => {
     state.scm.commitMessage = msg;
-    // Toggle the commit button in place: a full render() on every
-    // keystroke is wasteful and disturbs the async-loaded history.
-    document.querySelectorAll(".sol-exp-commit-btn").forEach((btn) => {
-      if (state.scm.committing || !state.scm.commitMessage.trim()) btn.setAttribute("disabled", "disabled");
-      else btn.removeAttribute("disabled");
-    });
+    // render() here is REQUIRED, not an optimization to avoid: React
+    // decides whether a click on an interactive element is delivered from
+    // the props snapshot of the LAST render. Toggling the `disabled`
+    // attribute imperatively without rendering leaves React believing the
+    // button is disabled, so onClick is suppressed — the button looks
+    // enabled but never fires. (This is exactly the stage-first symptom.)
+    // With the textarea uncontrolled, the render cannot disturb the caret
+    // or the loaded history.
+    render();
   };
 
   commands.genCommitMsg = async () => {
