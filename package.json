@@ -111,13 +111,13 @@
   ],
   "license": "MIT",
   "author": "xiaoksio",
-  "homepage": "https://github.com/xiaoksio/dsh-solution-explorer",
+  "homepage": "https://github.com/parnik911-byte/dsh-solution-explorer-en",
   "bugs": {
-    "url": "https://github.com/xiaoksio/dsh-solution-explorer/issues"
+    "url": "https://github.com/parnik911-byte/dsh-solution-explorer-en/issues"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/xiaoksio/dsh-solution-explorer.git"
+    "url": "git+https://github.com/parnik911-byte/dsh-solution-explorer-en.git"
   },
   "keywords": [
     "dsh-plugin",

@@ -7,17 +7,12 @@
 [![npm](https://img.shields.io/npm/v/dsh-solution-explorer)](https://www.npmjs.com/package/dsh-solution-explorer)
 [![npm downloads](https://img.shields.io/npm/dm/dsh-solution-explorer)](https://www.npmjs.com/package/dsh-solution-explorer)
 [![Awesome DSH Plugin](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com)
-[![dshfind](https://dshfind.com/api/badge/xiaoksio/dsh-solution-explorer?lang=en)](https://dshfind.com/plugins/xiaoksio/dsh-solution-explorer?ref=badge)
-[![license](https://img.shields.io/github/license/xiaoksio/dsh-solution-explorer)](LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/xiaoksio/dsh-solution-explorer)](https://github.com/xiaoksio/dsh-solution-explorer)
+[![license](https://img.shields.io/github/license/parnik911-byte/dsh-solution-explorer-en)](LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/parnik911-byte/dsh-solution-explorer-en)](https://github.com/parnik911-byte/dsh-solution-explorer-en)
 
 [![DSH](https://img.shields.io/badge/DSH-0.1.5--rc.1_~_0.2.x-4d6bfe)](https://www.npmjs.com/package/@deepseek-ai/dsh?activeTab=versions)
 
 ![File explorer + git status](https://img.shields.io/badge/-File_explorer_%2B_git_status-4d6bfe) ![Multi-tab editor](https://img.shields.io/badge/-Multi--tab_editor-4d6bfe) ![Previews](https://img.shields.io/badge/-Previews-4d6bfe) ![Diff](https://img.shields.io/badge/-Diff-4d6bfe) ![Commit graph](https://img.shields.io/badge/-Commit_graph-4d6bfe) ![Terminal](https://img.shields.io/badge/-Terminal-4d6bfe) ![Sidebar takeover](https://img.shields.io/badge/-Sidebar_takeover-4d6bfe)
-
-
-
-![dsh-solution-explorer demo](demo.gif)
 
 </div>
 
@@ -28,60 +23,66 @@
   as long as this plugin can read a file, the shipped preview panel never takes
   it over.
 - **File Explorer** — browse the current session workspace as a directory tree
-  with expand/collapse, VS Code-style file-type icons (TS/JS/Vue/JSON/image/
-  archive/script and 30+ more extensions), git status markers (M/A/D/R/?), names
-  color-coded by status (green untracked / yellow modified / grey ignored),
-  `.gitignore`-excluded files and folders shown grey, and directory "modified"
-  indicators.
+  with expand/collapse (including expand-all / collapse-all), VS Code-style
+  file-type icons (TS/JS/Vue/JSON/image/archive/script and 30+ more
+  extensions), git status markers (M/A/D/R/?), names color-coded by status
+  (green untracked / yellow modified / grey ignored), `.gitignore`-excluded
+  files and folders shown grey, and directory "modified" indicators.
+  Dot-prefixed names (including `.git`) and `node_modules` are hidden unless
+  "Show hidden files" is on.
 - **Source Control** — staged / unstaged / untracked change lists with
   stage / unstage / discard (per-file or all), commit with a message, and a
   branch info bar. **AI commit message**: pick a host-configured model in
-  Settings and tap the ✨-icon beside the commit box to generate a Conventional
-  Commits draft from the staged diff (optionally guided by the repo's
-  AGENTS.md). **Diff view**: full-file side-by-side compare with an
+  Settings and tap the ✨-icon beside the commit box to generate a
+  Conventional Commits draft from the staged diff (optionally guided by the
+  repo's AGENTS.md). **Diff view**: full-file side-by-side compare with an
   editable right column (Enter splits lines, backspace/delete merges, NBSP
   placeholders), a middle gutter to stage (⤒) or revert (↩) individual hunks,
-  Ctrl+S to save. **Commit Graph**: an SVG history view with
-  branch lanes and merge lines; click a commit to expand its changed files
-  (with file-type icons and status letters M/A/D/R) below the row, hover for
-  a tooltip with the full message, stats, and a GitHub link; plus checkout. **Sync**: fetch / pull / push / sync (pull +
-  push) with ahead/behind counts, each remote-write confirmed. **Branches**:
-  switch / create / rename / delete / merge / publish. **Remotes**: add /
-  remove / set URL. **Git Init**: initialize a repository from a plain
-  directory. **Merge changes**: pull/merge conflicts (UU/AA/DD/…) are
-  detected and listed for manual resolution. **Multi-repo support**:
-  auto-discovers git repositories under the workspace and lets you switch
-  between them; the SCM panel follows the selected repo. **Split panes**: drag
-  the divider between changes and repository to resize, history fills the
-  bottom. Bulk actions live in the section headers; discard all asks for
-  confirmation.
+  Ctrl+S to save. **Commit Graph**: an SVG history view with branch lanes and
+  merge lines; click a commit to expand its changed files (with file-type
+  icons and status letters M/A/D/R) below the row, hover for a tooltip with
+  the full message, stats, and a GitHub link; plus checkout. **Sync**: fetch /
+  pull / push / sync (pull + push) with ahead/behind counts, each remote-write
+  confirmed. **Branches & Tags**: switch / create / rename / delete / merge /
+  publish, and a tags list (name, short hash, commit subject).
+  **Remotes**: add / remove / set URL. **Git Init**: initialize a repository
+  from a plain directory. **Merge changes**: pull/merge conflicts
+  (UU/AA/DD/…) are detected and listed for manual resolution. **Multi-repo
+  support**: auto-discovers git repositories under the workspace and lets you
+  switch between them; the SCM panel follows the selected repo. **Split
+  panes**: drag the divider between changes and repository to resize, history
+  fills the bottom. Bulk actions live in the section headers; discard all
+  asks for confirmation.
 - **Syntax highlighting** — editor and diff views colorize 15 languages
   (TS/JS/Python/JSON/Markdown/...) with a GitHub Dark theme; the editor
   re-highlights live while typing, lightweight.
 - **File Search** — live name search across the workspace.
 - **File Editor** — a multi-tab editor in the conversation view's "Editor" tab:
   open any text file, edit, and save (button or Ctrl+S). Images open in an
-  in-editor preview with zoom/pan; `.md`/`.markdown` and `.html` open in rendered
-  previews with a preview/source toggle; `.pdf` renders in place. Other binary
-  files are detected and refused instead of corrupted.
+  in-editor preview with zoom/pan; `.md`/`.markdown` and `.html` open in
+  rendered previews with a preview/source toggle; `.pdf` renders in place
+  (PDF.js is lazy-loaded from the host, not bundled into `client.js`). Other
+  binary files are detected and refused instead of corrupted. Text files
+  larger than 10 MB are not loaded in full ("File too large to open (max
+  10 MB)"). Files outside the workspace can be opened read-only; they cannot
+  be saved.
 - **Collapsible rail** — collapse the whole panel into a narrow icon rail
-  (expand panel, explorer, search, source control, terminal). The source-control icon
-  shows a live change-count badge; clicking an icon reopens the panel on that
-  tab, matching the native sidebar's look.
+  (expand panel, explorer, search, source control, terminal). The source-control
+  icon shows a live change-count badge; clicking an icon reopens the panel on
+  that tab, matching the native sidebar's look.
 - **Multi-tab terminal** — a bottom terminal panel opened from the rail
   (native ConPTY, PowerShell/cmd by default); multiple tabs, drag to resize,
-  and auto cleanup of processes when a tab closes or the connection drops.
-- **File operations** — context menu with new file/folder, delete (confirm
-  dialog), copy / cut / paste, copy relative / absolute path; drag files within
-  the tree, drag files in from the OS, multi-select bulk actions.
+  auto cleanup of processes when a tab closes or the connection drops, and
+  reconnect with heartbeat after a transient drop. Shell, tab limit, and
+  panel height are configurable in Settings.
+- **File operations** — context menu with new file/folder (inline row), rename
+  (inline), delete (confirm dialog), copy / cut / paste, copy relative /
+  absolute path, and OS-level actions (reveal in file explorer, open with the
+  default app, "Open with…" picker, properties — the latter two on Windows);
+  drag files within the tree, drag files in from the OS (upload, ≤ 50 MB per
+  file, auto-renamed on conflict), multi-select bulk actions.
 - **English UI** — the interface is English-only.
 - **Dark theme** — matches the DSH Web UI tokens.
-
-## Screenshots
-
-| File Explorer | Source Control | Diff |
-| --- | --- | --- |
-| ![File Explorer](assets/screenshot-1-file-explorer.png) | ![Source Control](assets/screenshot-2-source-control.png) | ![Diff](assets/screenshot-3-diff.png) |
 
 ## Installation
 
@@ -116,14 +117,19 @@ column once a session with a workspace is active.
 ## Compatibility
 
 - **DSH 0.1.x / 0.2.x** — the declared peer range is
-  `>=0.1.0-rc.1 <0.3.0-0` (tested from `0.1.5-rc.1`, including `0.2.0-rc.2`).
-- **Minimum plugin version per DSH release**:
+  `>=0.1.0-rc.1 <0.3.0-0` (tested from `0.1.5-rc.1`, including `0.2.0-rc.2`
+  and `0.2.1-rc.2`).
+- **Minimum plugin version per DSH release** (current release: **1.0.3**):
   - DSH ≥ 0.1.7: **1.0.1** — from 0.1.7 the Session-list snapshot no longer carries
     `current` (the main-view Session is the one retained by `mainView`), and an older
     plugin hides the whole right column because of it (#2).
   - DSH ≥ 0.2.0: **1.0.2** — 0.2 renamed the official icon exports from
     `IconXxx16`/`IconXxx14` to `IconXxxRegular`/`IconXxxMedium`; the old names resolve
     to `undefined`, React throws #130, and the panel renders as an empty column (#3).
+  - DSH ≥ 0.2.1: **1.0.3** — on `0.2.1-rc.2` the panel rendered into the bottom-left
+    corner instead of the right column (the shell's grid root is a
+    `display:contents` slot node; the panel now pins itself to the real grid
+    track, `grid-column: 4`) (#4).
 - DSH validates these peer ranges before installing or activating a plugin, so a
   plugin older than the installed DSH is refused at install time rather than
   failing at runtime. After upgrading DSH, check this plugin's version in the
@@ -131,29 +137,40 @@ column once a session with a workspace is active.
 
 ## Configuration
 
-The plugin accepts an optional `config` in the bundle row
-(`cordis.patch.yml`):
+All settings are editable in the **Explorer** page of the DSH settings
+sidebar and are persisted by the host; the plugin also accepts an optional
+`config` in the bundle row (`cordis.patch.yml`) as the base layer
+(schema defaults → bundle config → user settings).
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `defaultWidth` | `number` | `280` | Panel width in px, clamped to 264–560. |
+| `defaultWidth` | `number` | `280` | Panel width in px, 264–420 (dragging may widen it up to 560). |
 | `autoOpen` | `boolean` | `true` | Auto-open the panel when a session activates. |
-| `filterPatterns` | `string[]` | `[]` | Name patterns to hide from the file tree. |
-| `showHidden` | `boolean` | `false` | Show dot-prefixed (hidden) files in the tree. |
+| `filterPatterns` | `string[]` | `[]` | Name patterns to hide from the file tree (comma-separated in Settings). |
+| `showHidden` | `boolean` | `false` | Show dot-prefixed (hidden) files — including `.git` — and `node_modules` in the tree. |
+| `terminalShell` | `string` | `''` | Default shell for embedded terminals (`pwsh` / `powershell` / `cmd` / `bash`); empty = platform default. |
+| `terminalMaxTabs` | `number` | `8` | Max terminal tabs, 2–16. |
+| `terminalHeight` | `number` | `400` | Initial bottom-terminal panel height in px, 120–480. |
+| `terminalMaxHeight` | `number` | `1000` | Max bottom-terminal panel height in px (drag limit), 240–1080. |
+| `commitModel` | `string` | `''` | Model for AI commit messages as `provider|model` (picked in Settings); empty disables the feature. |
+| `hideOfficialRightbarExpand` | `boolean` | `true` | Hide the DSH built-in right-bar expand button while the official right sidebar is collapsed; the right-bar service itself stays intact. |
 
 ## Development
 
 ```sh
 pnpm install
-pnpm build    # tsc declarations + tsdown bundles (lib/index.js, lib/client.js)
+pnpm build    # clean → generate PDF.js runtime assets (pdfjs/) → tsc -b (types) → tsdown (both halves)
 pnpm watch    # rebuild on change
 ```
 
-See [CONTRIBUTING.md](https://github.com/xiaoksio/dsh-solution-explorer/blob/main/CONTRIBUTING.md) for development conventions.
+See [CONTRIBUTING.md](https://github.com/parnik911-byte/dsh-solution-explorer-en/blob/main/CONTRIBUTING.md) for development conventions.
 
-`pnpm install` also runs the `prepare` script, so a git-based install
-(`dsh plugin add github:xiaoksio/dsh-solution-explorer`) builds `lib/` on
-the target machine without manual steps.
+`pnpm install` also runs the `prepare` script
+(`node scripts/gen-pdfjs-assets.mjs && tsdown`), so a git-based install
+(`dsh plugin add github:parnik911-byte/dsh-solution-explorer-en`) builds `lib/` and
+the generated `pdfjs/` runtime assets on the target machine without manual
+steps. `lib/` and `pdfjs/` are git-ignored build output, published via the
+`files` field in `package.json`.
 
 ## How it works
 
@@ -162,18 +179,31 @@ The plugin is a single npm package with two halves, both declared in
 
 - **Host half** (`src/index.ts`, exports `.` → `lib/index.js`): runs in the
   dsh host process and serves the workspace-gated filesystem and git API over
-  HTTP routes under `/solution-explorer/*` (`tree`, `read`, `write`,
-  `delete`, `search`, `git-repos`, `git-status`, `git-diff`, `git-log`,
-  `git-stage`, `git-unstage`, `git-discard`, `git-commit`, `paste`, `move`,
-  `upload`, `create`). All routes
-  resolve paths strictly inside the session workspace root. It also announces
-  itself in the system prompt so the agent knows what the panel can do.
+  HTTP routes under `/solution-explorer/*` (`tree`, `read`, `raw`, `write`,
+  `delete`, `search`, `settings`, `rename`, `paste`, `move`, `upload`,
+  `create`, `open-native`, `git-repos`, `git-status`, `git-diff`, `git-log`,
+  `git-commit-detail`, `git-remotes`, `git-branches`, `git-tags`,
+  `git-stage`, `git-unstage`, `git-discard`, `git-commit`, `git-stage-hunk`,
+  `git-init`, `git-fetch`, `git-pull`, `git-push`, `git-sync`,
+  `git-branch-create`, `git-branch-checkout`, `git-branch-delete`,
+  `git-branch-rename`, `git-branch-merge`, `git-branch-publish`,
+  `git-remote-add`, `git-remote-remove`, `git-remote-set-url`,
+  `llm-models`, `llm-generate-commit`, `pdfjs/lib`, `pdfjs/worker`,
+  `pdfjs/asset`, and the terminal routes `terminal`,
+  `terminal/stream` (shared SSE), `terminal/:id/input`,
+  `terminal/:id/reboot`, `terminal/:id`). Writes, moves, and git mutations
+  resolve paths strictly inside the session workspace root; reads also accept
+  absolute paths outside the root (opening a claimed file there), which the
+  editor then shows read-only. It also announces itself in the system prompt
+  so the agent knows what the panel can do.
 - **Browser half** (`src/client/index.ts`, exports `./client` →
   `lib/client.js`): loaded by the Web GUI's `__ModuleLoader__` as a
-  closure-factory bundle. It appends the explorer column to the frame grid
-  (`[data-dsh-frame]`), follows the active session's `cwd`, and mounts the
-  file editor into the `conversation.view` slot. A `sidebarRightTabs`
-  registration claims every `dsh-resource://file/**` address, so a file opened
+  closure-factory bundle. It appends the explorer column to the shell's frame
+  grid (`resolveShellGrid` in `src/client/layout/grid-find.ts`, pinned to
+  `grid-column: 4`), follows the active session's `cwd`, mounts the file
+  editor into the `conversation.view` slot, registers the **Explorer** page
+  in `settings.section`, and claims every `dsh-resource://file/**` address
+  (via `sidebarRightTabs` plus a claimed-file watch), so a file opened
   anywhere in the GUI is handed to that editor view instead of the shipped
   preview panel.
 
